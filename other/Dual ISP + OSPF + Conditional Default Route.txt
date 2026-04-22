@@ -1,0 +1,313 @@
+سندخل الآن في **تصميم Enterprise حقيقي** يستخدم في الشركات ومراكز البيانات:
+
+# ✅ Dual ISP + OSPF + Conditional Default Route
+
+هذا التطور الطبيعي بعد حل **IP SLA + Static Routes**.
+
+---
+
+# 🧭 الفكرة العامة (Concept)
+
+بدلاً من أن:
+
+* R1 يقرر المسار باستخدام Static Routes
+
+نقوم بـ:
+
+> جعل **OSPF هو من يوزّع الإنترنت داخل الشبكة**
+> لكن **بشرط** أن يتم إعلان Default Route فقط عندما يكون الإنترنت فعلياً متاحاً.
+
+وهذا يسمى:
+
+## **Conditional Default Route Injection**
+
+---
+
+# 🏗️ Architecture
+
+شبكتك تصبح منطقياً كالتالي:
+
+```
+              Internet
+                |
+        -------------------
+        |                 |
+       R2               R3
+   (ISP Edge)       (ISP Edge)
+        \               /
+         \             /
+              R1
+          (Core Router)
+               |
+            LAN / OSPF
+```
+
+---
+
+# 🎯 ماذا نريد تحقيقه؟
+
+| الهدف             | النتيجة                   |
+| ----------------- | ------------------------- |
+| High Availability | سقوط ISP لا يقطع الإنترنت |
+| Dynamic Routing   | بدون Static Routes        |
+| Smart Failover    | تلقائي بالكامل            |
+| Load Sharing      | عبر OSPF ECMP             |
+| Enterprise Logic  | نفس تصميم الشركات         |
+
+---
+
+# 🧠 المبدأ التقني
+
+## الفكرة الأساسية:
+
+### R2 و R3:
+
+* يتحققان من الإنترنت باستخدام IP SLA
+* إذا الإنترنت يعمل → يعلنان Default Route داخل OSPF
+* إذا سقط → يوقفان الإعلان
+
+### R1:
+
+* يستقبل Default Route عبر OSPF
+* إذا وصل مساران → يعمل Load Balancing
+* إذا بقي واحد → Failover تلقائي
+
+---
+
+# ⚙️ Step 1 — تشغيل OSPF بين الراوترات
+
+## على جميع الراوترات
+
+### R1
+
+```cisco
+router ospf 1
+ router-id 1.1.1.1
+ network 10.0.12.0 0.0.0.3 area 0
+ network 10.0.13.0 0.0.0.3 area 0
+```
+
+---
+
+### R2
+
+```cisco
+router ospf 1
+ router-id 2.2.2.2
+ network 10.0.12.0 0.0.0.3 area 0
+```
+
+---
+
+### R3
+
+```cisco
+router ospf 1
+ router-id 3.3.3.3
+ network 10.0.13.0 0.0.0.3 area 0
+```
+
+---
+
+# ⚙️ Step 2 — إضافة Default Route نحو الإنترنت
+
+(على R2 و R3 فقط)
+
+مثال:
+
+```cisco
+ip route 0.0.0.0 0.0.0.0 ISP_GATEWAY
+```
+
+---
+
+# ⚙️ Step 3 — مراقبة الإنترنت (IP SLA)
+
+## على R2
+
+```cisco
+ip sla 10
+ icmp-echo 8.8.8.8 source-interface s0/0
+ frequency 5
+ip sla schedule 10 life forever start-time now
+```
+
+```cisco
+track 10 ip sla 10 reachability
+```
+
+---
+
+## على R3
+
+```cisco
+ip sla 20
+ icmp-echo 1.1.1.1 source-interface s0/0
+ frequency 5
+ip sla schedule 20 life forever start-time now
+```
+
+```cisco
+track 20 ip sla 20 reachability
+```
+
+---
+
+# ⚙️ Step 4 — Conditional Default Route (الجزء الذكي)
+
+## هنا السحر الحقيقي ✨
+
+بدلاً من إعلان default دائماً:
+
+نعلنه فقط إذا الـ track UP.
+
+---
+
+## R2
+
+```cisco
+router ospf 1
+ default-information originate route-map ISP1
+```
+
+---
+
+### Route-map
+
+```cisco
+route-map ISP1 permit 10
+ match track 10
+```
+
+---
+
+## R3
+
+```cisco
+router ospf 1
+ default-information originate route-map ISP2
+```
+
+```cisco
+route-map ISP2 permit 10
+ match track 20
+```
+
+---
+
+# 🔁 ماذا يحدث الآن؟
+
+## الحالة الطبيعية
+
+```
+R2 → يعلن 0.0.0.0
+R3 → يعلن 0.0.0.0
+```
+
+R1 يرى:
+
+```
+2 Default Routes
+```
+
+➡️ OSPF ECMP Load Balancing يعمل.
+
+---
+
+## إذا سقط ISP1
+
+IP SLA يفشل على R2:
+
+```
+track DOWN
+↓
+OSPF stops advertising default route
+```
+
+R1 يحذف المسار فوراً.
+
+الترافيك يتحول بالكامل إلى R3.
+
+---
+
+## إذا عاد الإنترنت
+
+OSPF يعيد الإعلان تلقائياً.
+
+بدون أي تدخل.
+
+---
+
+# 📊 تحقق من النتيجة
+
+على R1:
+
+```cisco
+show ip route ospf
+```
+
+سترى:
+
+```
+O*E2 0.0.0.0 via 10.0.12.2
+O*E2 0.0.0.0 via 10.0.13.2
+```
+
+---
+
+# ⚖️ كيف يحدث Load Balancing؟
+
+OSPF يدعم:
+
+## ECMP — Equal Cost MultiPath
+
+بشكل افتراضي حتى 4 مسارات.
+
+يمكن زيادته:
+
+```cisco
+router ospf 1
+ maximum-paths 2
+```
+
+---
+
+# 🔥 لماذا هذا التصميم Enterprise فعلاً؟
+
+| Feature         | Static + SLA | OSPF Conditional |
+| --------------- | ------------ | ---------------- |
+| Dynamic         | ❌            | ✅                |
+| Scalability     | ضعيف         | عالي             |
+| Multi-site      | صعب          | ممتاز            |
+| Automation      | متوسط        | عالي             |
+| Real Enterprise | ❌            | ✅                |
+
+---
+
+# 🧩 ماذا تستخدم الشركات الكبيرة بعد هذا؟
+
+المرحلة التالية مباشرة هي:
+
+## 🏆 BGP Multi-Homing
+
+حيث:
+
+* كل ISP يعطيك ASN
+* تختار المسار حسب السياسة
+* Traffic Engineering حقيقي
+
+---
+
+# ⭐ خلاصة المفهوم (احفظها)
+
+> ❝ لا تعلن Default Route داخل OSPF إلا إذا كان الإنترنت حقيقياً متاحاً ❞
+
+هذا هو **Conditional Default Routing**.
+
+---
+
+إذا أردت، يمكنني الآن أن أريك المستوى الأعلى جداً الذي يفهمه فقط مهندسو CCNP/CCIE:
+
+✅ كيف تجعل ISP1 مفضل outbound
+✅ و ISP2 مفضل inbound
+✅ مع Load Sharing حقيقي باستخدام OSPF Cost Manipulation + Policy Routing.

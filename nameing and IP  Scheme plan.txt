@@ -1,0 +1,324 @@
+
+================================================
+Device Link 10.0.0.0/8 (Point-to-Point Links) /31
+│
+├── 10.10.0.0/16   DataCenter
+├── 10.20.0.0/16   Branch 1
+├── 10.30.0.0/16   Branch 2
+-----------------------------------------------
+Loopback 172.16.0.0/16	(uniq Ip ) /32
+│
+├── 172.16.10.0/24   DataCenter
+├── 172.16.20.0/24   Branch 1
+├── 172.16.30.0/24   Branch 2
+-----------------------------------------------
+Vlan 192.168.0.0/16	(255 host) /24
+│
+├── 192.168.10-19.0/24   DataCenter
+├── 192.168.20-29.0/24   Branch 1
+├── 192.168.30-39.0/24   Branch 2
+#vlan 10-60 for all branch 
+sit=Dc=1 ,vlan 10=192.168.11.0
+sit=B1=2 ,vlan 20=192.168.22.0
+sit=B2=3 ,vlan 30=192.168.33.0
+
+sit=Dc=1 ,vlan 60=192.168.16.0
+-----------------------------------------------
+Frewall Addressing
+192.168.0.0/16	(255 host) /24
+│
+├── 192.168.10.1-2 /30   DataCenter
+├── 192.168.20.1-2 /30   Branch 1
+├── 192.168.30.1-2 /30   Branch 2
+-----------------------------------------------
+Tunnel Addressing
+│
+├── 10.10.10.0/16   Tunnel 1 ISP 1
+├── 10.10.20.0/16   Tunnel 2 ISP 2
+
+----------------------------------------------
+WAN 82.82.0.0/16 Loopback
+│
+├── 82.82.81.0/32   ISP 1
+├── 82.82.82.0/32   ISP 2
+----------------------
+WAN 8.8.0.0/16 p2p link
+│
+├── 82.1.0.0/16   ISP 1
+├── 82.2.2.0/16   ISP 2
+================================================
+Routing 
+│
+├── DataCenter
+	├── ospf 1 area 1 for lan
+	├── ospf 1 a 0 for mpls ISP 1
+	├── ospf 1 a 0 for mpls ISP 2
+├── Branch 1
+	├── ospf 1 area 2 for lan
+├── Branch 2
+	├── eigrp 100 for lan
+	├── ospf 1 area 3 for lan
+	├── eigrp 100 for mpls ISP 1
+	├── ospf 1 area 0 for mpls ISP 2
+================================================
+====================================
+-قاعده عنونه loopback
+172.16.<SITE>.<DEVICE sorting>
+SITE-ID =10 ,Device=DC-RE1 == 172.16.10.1
+
+-----------------------------------------------
+-قاعده عنونه الربط بين الاجهزه
+10.<SITE-ID>.<scours last number Loop0 IP +destination last number Loop0 IP>.<host> /31
+
+SITE-ID 
+-DC	10  ,-B1	20 ,-B2	30
+
+امثله :
+SITE-ID =10 ,scours Loop0 IP=R1(172.16.10.1):1 ,destination Loop0 IP=R2(172.16.10.2):2
+==10.10.12.1/31 ,وفي الطرف الاحر 10.10.12.2/31
+مثال اخر 
+SITE-ID =20 ,scours Loop0 IP=B1-Core1(172.16.20.5):5 ,destination Loop0 IP=B1-DSw2(172.16.20.8):8
+==10.20.58.1/31 ,وفي الطرف الاحر 10.20.58.2/31
+
+وهكذا
+-----------------------------------------------
+قاعده عنونه ال vlan
+VLAN 10,20,30,40,50
+[192].[168].[SiteID/VLAN ID].[Host]
+site :1 ,vlan 10 ==192.168.11.10
+site :2 ,vlan 10 ==192.168.21.10
+site :3 ,vlan 10 ==192.168.31.10
+-----------------------------------------------
+-قاعده عنونه الربط بين الاجهزه
+10.<SITE-ID>.<255>.<host> /30
+SITE-ID =10 ==10.10.255.10
+======================================================
+-قاعده تسميه الاجهزه 
+<site name>-<type > + <layer>-<number>
+site=DC,type=R,layer=Edge,number=1	==DC-RE1
+
+------
+DC = Data Center
+B1 = Brunch 1
+B2 = Brunch 2
+--
+1 = Primary
+2 = auxiliary 
+
+---
+RE	=Router Edge
+F	=Firewall
+Core	=Core switch
+Ds	=Distribution switch
+ASW	=Access switch
+
+Ser	=Server Zone
+DMZ	=DMZ Zone
+Admin	=Admin Zone
+------------------------------------------------------
+DC device nameing
+----
+DC-RE1 ,DC-RE2
+DC-Core1 ,DC-Core2
+DC-FPA1 ,DC-FPA2
+
+DCSer-DS1,DCSer-DS2
+DCSer-ASW1
+DCDMZ-DS1,DCDMZ-DS2
+DCDMZ-ASW1
+DCAdm-DS1,DCAdm-DS2
+DCAdm-ASW1
+------------------------------------------------------
+B1 device nameing
+----
+B1-RE1 ,B1-RE2
+B1-Core1 ,B1-Core2
+B1-Sophos1 ,B1-Sophos2
+
+B1-DS1,B1Ser-DS2
+B1-ASW1
+B1-ASW2
+B1-ASW3
+------------------------------------------------------
+B2 device nameing 
+----
+B2-RE1 ,B2-RE2
+B2-Core1 ,B2-Core2
+B2-FG1 ,B2-FASA2
+
+B2-DS1,B2-DS2
+B2-ASW1
+B2-ASW2
+B2-ASW3
+=============================================================
+
+====================================================
+نمط التوصيل في الفرع الرئيسي DC
+====================================================
+Router Edge
+--------------------------
+Loopback0	
+G0/0	-> DC-Core1
+G1/0	-> DC-Core1
+
+G2/0	->to DC-RE1
+
+G3/0	->ISP 1
+G4/0	->ISP 2
+------------------------------------------------
+Core switch
+--------------------------------
+Ethernet0/0-3 ,Eth1/0-3		->8 port Ethernet 
+Loopback0
+
+Eth0/0	->Router Edge1
+Eth0/1	->Router Edge2
+
+Eth0/2	->Firewall1
+Eth0/3	->Firewall2
+
+Eth1/0	->Distribution switch1
+Eth1/1	->Distribution switch2
+Eth1/2	->
+Eth0/3	->
+
+-----------------------------------------------
+Distribution switch in DC for admin
+----------------------
+Loopback0
+Eth0/0	->
+Eth0/1	->
+Eth0/2	->Distribution switch2	-ch1
+Eth0/3  ->Distribution switch2	-ch1
+
+Eth1/0	->Firewall1
+Eth1/1	->Firewall2
+
+Eth1/2	->Access switch1
+Eth1/3	->Access switch1	-ch1
+
+Eth2/0	->Access switch 2	-ch2
+Eth2/1	->Access switch 2	-ch2
+
+Eth2/2	->Access switch 3	-che3
+Eth2/3	->Access switch 3	-che3
+-----------------------------------------------
+Distribution switch in DC for server and dmz zone 
+----------------------
+Loopback0
+Eth0/0	->Core switch
+Eth0/1	->Core switch
+Eth0/2	->
+Eth0/3  ->
+
+Eth1/0	->Distribution switch2
+Eth1/1	->Distribution switch2
+
+Eth1/0	->Access switch1	-ch1
+Eth1/1	->Access switch1	-ch1
+
+Eth1/2	->Access switch 2	-ch2
+Eth1/3	->Access switch 2	-ch2
+
+Eth2/0	->Access switch 3	-che3
+Eth2/1	->Access switch 3	-che3
+
+
+-----------------------------------------------
+Access switch
+----------------------
+Eth0/0	->Vlan
+Eth0/1	->Vlan
+Eth0/2	->Vlan
+Eth0/3  ->Vlan
+
+Eth1/0	->Distribution switch1	-ch1
+Eth1/1	->Distribution switch1	-ch1
+
+Eth1/2	->Distribution switch2	-ch2
+Eth1/3	->Distribution switch2	-ch2
+====================================================
+نمط التوصيل في الفروع B1 ,B2 
+=====================================================
+Router Edge
+--------------------------
+Loopback0
+G0/0	-> Firewall1
+G1/0	-> Firewall2
+
+G2/0	->to Router Edge2
+
+G3/0	-> ISP 1
+G4/0	-> ISP 2
+----------------------------------------------------
+Core  switch
+-------------------------------
+Loopback0
+Eth0/0	->Firewall1
+Eth0/1	->Firewall2
+Eth0/2	->Core switch 2
+Eth0/3  ->
+Eth1/0	->Distribution switch1
+Eth1/1	->Distribution switch2
+
+Eth1/2	->Access switch1	-ch1
+Eth1/3	->Access switch1	-ch1
+
+-----------------------------------------------
+Distribution switch
+----------------------
+Loopback0
+Eth0/0	->Core switch
+Eth0/1	->Core switch
+Eth0/2	->Distribution switch2
+Eth0/3  ->Distribution switch2
+
+Eth1/0	->Access switch1	-ch1
+Eth1/1	->Access switch1	-ch1
+
+Eth1/2	->Access switch 2	-ch2
+Eth1/3	->Access switch 2	-ch2
+
+Eth2/0	->Access switch 3	-che3
+Eth2/1	->Access switch 3	-che3
+
+Eth3/0	->server	-ch1
+Eth3/1	->server 	-ch1
+-----------------------------------------------
+Access switch
+----------------------
+Loopback0
+Eth0/0	->Vlan
+Eth0/1	->Vlan
+Eth0/2	->Vlan
+Eth0/3  ->Vlan
+
+Eth1/0	->Distribution switch1	-ch1
+Eth1/1	->Distribution switch1	-ch1
+
+Eth1/2	->Distribution switch2	-ch2
+Eth1/3	->Distribution switch2	-ch2
+--------------------------------------
+======================================================
+ISP 1
+-------------
+PE1 ,PE2 ,PE3
+--------------------
+Loopback0
+G0/0	-> PE1
+G1/0	-> PE2
+G2/0	->
+G3/0	-> Router Edge1
+G4/0	-> Router Edge2
+
+======================================================
+ISP 2
+-------------
+ISP2
+--------------------
+Loopback0
+G1/0	-> Router Edge1
+G2/0	-> Router Edge2
+G3/0	-> Router Edge3
+==========================================================
+

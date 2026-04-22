@@ -1,0 +1,208 @@
+=============================================================
+hostname B2-CSW1
+ip access-list extended ACL_VLAN-To-BRANCH
+ permit ip any 10.10.0.0 0.0.255.255
+ permit ip any 172.16.10.0 0.0.0.255
+ permit ip any 192.168.8.0 0.0.7.255 !8-15
+ permit ip any 192.168.16.0 0.0.3.255 !16-19
+
+ permit ip any 10.30.0.0 0.0.255.255
+ permit ip any 172.16.30.0 0.0.0.255
+ permit ip any 192.168.16.0 0.0.3.255 !30-31
+ permit ip any 192.168.32.0 0.0.7.255 !32-39
+
+ permit ip any 172.16.20.0 0.0.0.3
+
+ip sla 1
+ icmp-echo 10.20.13.2 source-interface e0/0 
+ frequency 5
+ip sla schedule 1 life forever start-time now
+track 1 ip sla 1 reachability
+ip sla 2
+ icmp-echo 10.20.14.2 source-interface e0/1 
+ frequency 5
+ip sla schedule 2 life forever start-time now
+track 2 ip sla 2 reachability
+
+route-map PBR_VLAN-To-BRANCH permit 10
+ match ip address ACL_VLAN-To-BRANCH
+ set ip next-hop verify-availability 10.20.45.1 1 track 2
+ set ip next-hop verify-availability 10.20.35.1 2 track 1
+! set ip next-hop 10.20.56.2
+
+int range e1/0-1,e0/2
+ ip policy route-map PBR_VLAN-To-BRANCH
+
+
+
+ip route 0.0.0.0 0.0.0.0 10.20.35.1 track 1
+ip route 0.0.0.0 0.0.0.0 10.20.45.1 20 track 2
+
+ip route 0.0.0.0 0.0.0.0 10.20.56.2 30
+
+=========================================================
+hostname B2-CSW2
+ip access-list extended ACL_VLAN-To-BRANCH
+ permit ip any 10.10.0.0 0.0.255.255
+ permit ip any 172.16.10.0 0.0.0.255
+ permit ip any 192.168.8.0 0.0.7.255 !8-15
+ permit ip any 192.168.16.0 0.0.3.255 !16-19
+
+ permit ip any 10.30.0.0 0.0.255.255
+ permit ip any 172.16.30.0 0.0.0.255
+ permit ip any 192.168.16.0 0.0.3.255 !30-31
+ permit ip any 192.168.32.0 0.0.7.255 !32-39
+
+ permit ip any 172.16.20.0 0.0.0.3
+
+ip sla 1
+ icmp-echo 10.20.13.2 source-interface e0/0 
+ frequency 5
+ip sla schedule 1 life forever start-time now
+track 1 ip sla 1 reachability
+ip sla 2
+ icmp-echo 10.20.14.2 source-interface e0/1 
+ frequency 5
+ip sla schedule 2 life forever start-time now
+track 2 ip sla 2 reachability
+route-map PBR_VLAN-To-BRANCH permit 10
+ match ip address ACL_VLAN-To-BRANCH
+ set ip next-hop verify-availability 10.20.46.1 1 track 2
+ set ip next-hop verify-availability 10.20.36.1 2 track 1
+! set ip next-hop 10.20.56.1
+
+int range e1/0-1,e0/2
+ ip policy route-map PBR_VLAN-To-BRANCH
+
+ip route 0.0.0.0 0.0.0.0 10.20.36.1 track 1	
+ip route 0.0.0.0 0.0.0.0 10.20.46.1 20 track 2
+
+!ip route 0.0.0.0 0.0.0.0 10.20.56.1 30
+=========================================================
+
+
+
+
+=========================================================
+=========================================================
+hostname B2-DS1
+
+ip access-list extended VLAN10-30_TRAFFIC
+ permit ip 192.168.21.0 0.0.0.255 any
+ permit ip 192.168.22.0 0.0.0.255 any
+ permit ip 192.168.23.0 0.0.0.255 any
+!
+ip access-list extended VLAN40-60_TRAFFIC
+ permit ip 192.168.24.0 0.0.0.255 any
+ permit ip 192.168.25.0 0.0.0.255 any
+ permit ip 192.168.26.0 0.0.0.255 any
+
+ip access-list extended VLAN_Self
+ permit ip 192.168.20.0 0.0.3.255 192.168.20.0 0.0.3.255
+ permit ip 192.168.20.0 0.0.3.255 192.168.23.0 0.0.3.255
+ permit ip 192.168.23.0 0.0.3.255 192.168.20.0 0.0.3.255
+ permit ip 192.168.23.0 0.0.3.255 192.168.23.0 0.0.3.255
+
+!------------------------------------------
+!-------------------------------------
+ip sla 1
+ icmp-echo 10.20.57.1 source-interface e0/0 
+ timeout 5000
+ frequency 5
+ip sla schedule 1 life forever start-time now
+ip sla 2
+ icmp-echo 10.20.67.1 source-interface e0/1
+ timeout 5000
+ frequency 5
+ip sla schedule 2 life forever start-time now
+!
+track 1 ip sla 1 reachability
+track 2 ip sla 2 reachability
+! -----------------------
+ip route 0.0.0.0 0.0.0.0 10.20.57.1  track  1
+ip route 0.0.0.0 0.0.0.0 10.20.67.1 20 track 2
+
+ip route 0.0.0.0 0.0.0.0 10.20.78.2 30
+!-------------------------------------------------------
+route-map PBR_VLAN10-30 permit 5
+ match ip address VLAN_Self
+
+route-map PBR_VLAN10-30 permit 10
+ match ip address VLAN10-30_TRAFFIC
+ set ip next-hop verify-availability 10.20.57.1 1 track 1
+ set ip next-hop verify-availability 10.20.67.1 2 track 2
+ set ip next-hop 10.20.78.2 ! B2-DSW2
+
+route-map PBR_VLAN40-60 permit 5
+ match ip address VLAN_Self
+route-map PBR_VLAN40-60 permit 10
+ match ip address VLAN40-60_TRAFFIC
+ set ip next-hop verify-availability 10.20.67.1 1 track 2
+ set ip next-hop verify-availability 10.20.57.1 2 track 1
+ set ip next-hop 10.20.78.2 ! B2-DSW2
+
+!---
+int range vlan 10-30 
+ ip policy route-map PBR_VLAN10-30
+
+int range vlan 40-60 
+ ip policy route-map PBR_VLAN40-60
+===========================================================
+hostname B2-DSW2
+ip access-list extended VLAN10-30_TRAFFIC
+ permit ip 192.168.21.0 0.0.0.255 any
+ permit ip 192.168.22.0 0.0.0.255 any
+ permit ip 192.168.23.0 0.0.0.255 any
+!
+ip access-list extended VLAN40-60_TRAFFIC
+ permit ip 192.168.24.0 0.0.0.255 any
+ permit ip 192.168.25.0 0.0.0.255 any
+ permit ip 192.168.26.0 0.0.0.255 any
+
+ip access-list extended VLAN_Self
+ permit ip 192.168.20.0 0.0.3.255 192.168.20.0 0.0.3.255
+ permit ip 192.168.20.0 0.0.3.255 192.168.23.0 0.0.3.255
+ permit ip 192.168.23.0 0.0.3.255 192.168.20.0 0.0.3.255
+ permit ip 192.168.23.0 0.0.3.255 192.168.23.0 0.0.3.255
+
+!-------------------------------------
+ip sla 1
+ icmp-echo 10.20.68.1 source-interface e0/1 
+ timeout 5000
+ frequency 5
+ip sla schedule 1 life forever start-time now
+ip sla 2
+ icmp-echo 10.20.58.1 source-interface e0/0
+ timeout 5000
+ frequency 5
+ip sla schedule 2 life forever start-time now
+!
+track 1 ip sla 1 reachability
+track 2 ip sla 2 reachability
+! -----------------------
+ip route 0.0.0.0 0.0.0.0 10.20.68.1  track  1
+ip route 0.0.0.0 0.0.0.0 10.20.58.1 20 track 2
+
+ip route 0.0.0.0 0.0.0.0 10.10.78.1 30
+!-------------------------------------------------------
+route-map PBR_VLAN10-30 permit 5
+ match ip address VLAN_Self
+route-map PBR_VLAN10-30 permit 10
+ match ip address VLAN10-30_TRAFFIC
+ set ip next-hop verify-availability 10.20.58.1 1 track 2
+ set ip next-hop verify-availability 10.20.68.1 2 track 1
+ set ip next-hop 10.20.78.1 ! B2-DSW1
+
+route-map PBR_VLAN40-60 permit 5
+ match ip address VLAN_Self
+route-map PBR_VLAN40-60 permit 10
+ match ip address VLAN40-60_TRAFFIC
+ set ip next-hop verify-availability 10.20.68.1 1 track 1
+ set ip next-hop verify-availability 10.20.58.1 2 track 2
+ set ip next-hop 10.20.78.1 ! B2-DSW1
+!---
+int range vlan 10-30 
+ ip policy route-map PBR_VLAN10-30
+int range vlan 40-60 
+ ip policy route-map PBR_VLAN40-60
+

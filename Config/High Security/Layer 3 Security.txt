@@ -1,0 +1,110 @@
+
+B1-DSW1(config)# vlan 999
+B1-DSW1(config-vlan)# name Security-Native-BlackHole
+
+B1-DSW1(config)# interface range Port-channel1 - 2
+B1-DSW1(config-if-range)# switchport trunk native vlan 999
+B1-DSW1(config-if-range)# exit
+```
+B1-DSW1(config)# interface range Ethernet0/2 - 3 , Ethernet1/0 - 1
+B1-DSW1(config-if-range)# spanning-tree guard root
+B1-DSW1(config-if-range)# exit
+```
+
+
+
+=============================================================
+=============================================================
+
+interface range Ethernet0/0 - 1
+ no cdp enable
+===================================================
+interface range  Ethernet0/0-1
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict 
+
+interface Ethernet0/0
+ switchport port-security mac-address 00:50:79:66:68:03 
+
+interface Ethernet0/1
+ switchport port-security mac-address 00:50:79:66:68:04 
+==============================================================
+vlan 999
+ name Native-BlackHole
+!
+interface rang Port-channel1-2
+ switchport trunk native vlan 999
+
+---------------------------
+ip dhcp snooping
+ip dhcp snooping vlan 10,20
+
+interface range Port-channel1-2 
+ ip dhcp snooping trust
+
+interface Ethernet0/0
+ ip dhcp snooping limit rate 15
+------------------------
+ip arp inspection vlan 10,20
+interface range Port-channel1-2
+ ip arp inspection trust
+--------------------------------
+ip verify source port-security 
+
+interface range Ethernet0/0-1
+ ip verify source
+
+-------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------
+spanning-tree portfast edge bpduguard default
+
+interface Ethernet0/0
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+----------------------
+
+interface Ethernet0/2
+ spanning-tree guard root
+
+
+
+
+
+
+
+
+
+
+===================================================
+spanning-tree loopguard default
+
+interface GigabitEthernet1/0/1
+ spanning-tree guard loop
+===================================
+interface GigabitEthernet1/0/10
+
+ storm-control broadcast level 5.00 3.00
+ storm-control multicast level 10.00 7.00
+ storm-control unicast level 8.00 5.00
+
+ storm-control action trap
+

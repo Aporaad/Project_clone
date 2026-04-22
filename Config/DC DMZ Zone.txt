@@ -1,0 +1,218 @@
+========================================================
+hostname DC-DMZ-DSW1
+
+no ip cef
+vlan 300
+ name server
+interface Vlan 300
+ ip address 192.168.130.101 255.255.255.0
+ no sh
+ vrrp 30 ip 192.168.130.100
+ vrrp 30 priority 150
+ vrrp 30 preempt
+ vrrp 30 authentication text p2x4p/*
+
+interface loopback 0
+ip address 172.16.10.9 255.255.255.255
+ ip ospf 1 area 1
+
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+!-----link  -------!
+interface e0/2
+ description Link to DC-DMZ-DSW2 e0/2 for all vlan
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan all
+ switchport nonegotiate
+ spanning-tree link-type point-to-point
+ spanning-tree cost 1000
+ no sh
+  
+interface Ethernet0/3
+ description Link to DC-DMZ-DSW2 e0/3 for routing
+ no switchport
+ ip address 10.10.109.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+
+
+!-------------Port-channel 2 ---------
+interface range e3/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+
+
+interface Ethernet1/0
+ description TO DC-FPA2
+ no sh
+ no switchport
+ ip add 10.10.96.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+interface Ethernet1/1
+ description TO DC-FPA1
+ no sh
+ no switchport
+ ip add 10.10.95.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+
+router ospf 1
+ router-id 172.16.10.9
+ network 10.10.0.0  0.0.255.255 area 1
+ network 192.168.130.0 0.0.0.255 area 1
+ passive-interface Ethernet 3/0
+ passive-interface Ethernet 3/1
+ passive-interface vlan 300
+
+=========================================
+hostname DC-DMZ-DSW2
+no ip cef
+vlan 300
+ name server
+interface Vlan 300
+ ip address 192.168.130.102 255.255.255.0
+ no sh
+ vrrp 30 ip 192.168.130.100
+ vrrp 30 priority 100
+ vrrp 30 authentication text p2x4p/*
+
+interface loopback 0
+ip address 172.16.10.10 255.255.255.255
+ ip ospf 1 area 1
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+!-----link  -------!
+interface e0/2
+ description Link to DC-DMZ-DSW1 e0/2 for all vlan
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan all
+ switchport nonegotiate
+ spanning-tree link-type point-to-point
+ spanning-tree cost 1000
+ no sh
+  
+interface Ethernet0/3
+ description Link to DC-DMZ-DSW1 e0/3 for routing
+ no switchport
+ ip address 10.10.109.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+
+interface range e0/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface port-channel2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 2 mode active
+
+interface Ethernet1/0
+ description TO DC-FPA2
+ no sh
+ no switchport
+ ip add 10.10.106.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+interface Ethernet1/1
+ description TO DC-FPA1
+ no sh
+ no switchport
+ ip add 10.10.105.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+
+router ospf 1
+ router-id 172.16.10.10
+ network 10.10.0.0  0.0.255.255 area 1
+ network 192.168.130.0 0.0.0.255 area 1
+ passive-interface Ethernet 0/0
+ passive-interface Ethernet 0/1
+ passive-interface vlan 300
+
+=================================================
+hostname DC-DMZ-ASW
+vlan 300
+ name dmz-server
+
+interface range e0/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface port-channel 1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 1 mode active
+
+interface range e3/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 300
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+
+interface e1/0
+ no sh
+ switchport mode access 
+ switchport access vlan 300
+

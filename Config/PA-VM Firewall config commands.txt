@@ -1,0 +1,223 @@
+
+set address "DC 10" ip-netmask 10.10.0.0/16
+set address "DC 192" ip-range 192.168.10.0-192.168.19.255
+set address "DC 172" ip-netmask 172.16.10.0/24
+=========================================================
+!----DC server -----!
+set address "DC 192 server" ip-range 192.168.100.0-192.168.100.255
+set address "DC 172 server" ip-range 172.16.10.7-172.16.10.8
+set address "DC 10 server"  ip-range 10.10.71.0-10.10.89.255
+set address-group "DC server" static "DC 10 server"
+set address-group "DC server" static "DC 172 server"
+set address-group "DC server" static "DC 192 server"
+
+!----DC DMZsrv
+set address "DC 192 DMZsrv" ip-range 192.168.130.0-192.168.130.255
+set address "DC 172 DMZsrv" ip-range 172.16.10.9-172.16.10.10
+set address "DC 10 DMZsrv"  ip-range 10.10.91.0-10.10.110.255
+set address-group "DC DMZsrv" static "DC 10 DMZsrv"
+set address-group "DC DMZsrv" static "DC 172 DMZsrv"
+set address-group "DC DMZsrv" static "DC 192 DMZsrv"
+
+!----DC admin
+set address "DC 192 admin" ip-range 192.168.200.0-192.168.200.255
+set address "DC 172 admin" ip-range 172.16.10.11-172.16.10.12
+set address "DC 10 admin"  ip-range 10.10.111.0-10.10.129.255
+set address-group "DC admin" static "DC 10 admin"
+set address-group "DC admin" static "DC 172 admin"
+set address-group "DC admin" static "DC 192 admin"
+
+!----DC Core
+set address "DC 172 core" ip-range 172.16.10.1-172.16.10.4
+set address "DC 10 core"  ip-range 10.10.12.0-10.10.49.255
+set address-group "DC core" static "DC 10 core"
+set address-group "DC core" static "DC 172 core"
+
+!----DC 
+set address-group "DC" static "DC server"
+set address-group "DC" static "DC DMZsrv"
+set address-group "DC" static "DC admin"
+set address-group "DC" static "DC core"
+
+!-----------------B1 ------------------!
+set address "B1 10" ip-netmask 10.20.0.0/16
+set address "B1 192" ip-range 192.168.20.0-192.168.29.255
+set address "B1 172" ip-netmask 172.16.20.0/24
+set address-group "B1" static "B1 10"
+set address-group "B1" static "B1 172"
+set address-group "B1" static "B1 192"
+
+!-----------------B2 ------------------!
+set address "B2 10" ip-netmask 10.30.0.0/16
+set address "B2 192" ip-range 192.168.30.0-192.168.39.255
+set address "B2 172" ip-netmask 172.16.30.0/24
+set address-group "B2" static "B2 10"
+set address-group "B2" static "B2 172"
+set address-group "B2" static "B2 192"
+
+
+============================================================
+
+set network profiles monitor-profile ping action fail-over interval 5 
+
+
+set rulebase pbf rules "server to B1_B2_Core" from zone Server
+set rulebase pbf rules "server to B1_B2_Core" source "DC server"
+set rulebase pbf rules "server to B1_B2_Core" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "server to B1_B2_Core" application any
+set rulebase pbf rules "server to B1_B2_Core" service any
+set rulebase pbf rules "server to B1_B2_Core" action forward nexthop ip-address 10.10.35.1
+set rulebase pbf rules "server to B1_B2_Core" action forward egress-interface ethernet1/5
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor profile ping
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor disable-if-unreachable yes
+
+
+!set rulebase pbf rules "server to B1_B2_Core" enforce-symmetric-return yes
+
+!----------- --------------!
+set rulebase pbf rules "DMZ to B1_B2_Core" from zone DMZsrv
+set rulebase pbf rules "DMZ to B1_B2_Core" source "DC DMZsrv"
+set rulebase pbf rules "DMZ to B1_B2_Core" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "DMZ to B1_B2_Core" application any
+set rulebase pbf rules "DMZ to B1_B2_Core" service any
+
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward nexthop ip-address 10.10.35.1
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward egress-interface ethernet1/5
+
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor profile ping
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor disable-if-unreachable yes
+
+=================================
+set network virtual-router ospf routing-table ip static-route toCore2 destination 0.0.0.0/0
+set network virtual-router ospf routing-table ip static-route toCore2 interface ethernet1/6
+set network virtual-router ospf routing-table ip static-route toCore2 nexthop ip-address 10.10.45.1
+set network virtual-router ospf routing-table ip static-route toCore2 metric 10
+set network virtual-router ospf routing-table ip static-route toCore2 route-table unicast
+set network virtual-router ospf routing-table ip static-route toCore2 bfd profile default
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor enable yes
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor failure-condition any
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor hold-time 2
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 enable yes
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 source 10.10.45.2/30
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 destination 8.8.8.8
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 interval 3
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 count 5
+
+
+set network virtual-router ospf routing-table ip static-route toCore1 destination 0.0.0.0/0
+set network virtual-router ospf routing-table ip static-route toCore1 interface ethernet1/5
+set network virtual-router ospf routing-table ip static-route toCore1 nexthop ip-address 10.10.35.1
+set network virtual-router ospf routing-table ip static-route toCore1 metric 20
+set network virtual-router ospf routing-table ip static-route toCore1 route-table unicast
+set network virtual-router ospf routing-table ip static-route toCore1 bfd profile default
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor enable yes
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor failure-condition any
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor hold-time 2
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 enable yes
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 source 10.10.35.2/30
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 destination 8.8.8.8
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 interval 3
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 count 5
+
+
+
+
+
+
+============================================================================================================
+============================================================================================================
+============================================================================================================
+
+
+============================================================================================================
+
+set network virtual-router ospf routing-table ip static-route toCore2 destination 0.0.0.0/0
+set network virtual-router ospf routing-table ip static-route toCore2 interface ethernet1/6
+set network virtual-router ospf routing-table ip static-route toCore2 nexthop ip-address 10.10.46.1
+set network virtual-router ospf routing-table ip static-route toCore2 metric 10
+set network virtual-router ospf routing-table ip static-route toCore2 route-table unicast
+set network virtual-router ospf routing-table ip static-route toCore2 bfd profile default
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor enable yes
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor failure-condition any
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor hold-time 2
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 enable yes
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 source 10.10.46.2/30
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 destination 8.8.8.8
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 interval 3
+set network virtual-router ospf routing-table ip static-route toCore2 path-monitor monitor-destinations 8.8.8.8 count 5
+
+
+set network virtual-router ospf routing-table ip static-route toCore1 destination 0.0.0.0/0
+set network virtual-router ospf routing-table ip static-route toCore1 interface ethernet1/5
+set network virtual-router ospf routing-table ip static-route toCore1 nexthop ip-address 10.10.36.1
+set network virtual-router ospf routing-table ip static-route toCore1 metric 20
+set network virtual-router ospf routing-table ip static-route toCore1 route-table unicast
+set network virtual-router ospf routing-table ip static-route toCore1 bfd profile default
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor enable yes
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor failure-condition any
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor hold-time 2
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 enable yes
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 source 10.10.36.2/30
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 destination 8.8.8.8
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 interval 3
+set network virtual-router ospf routing-table ip static-route toCore1 path-monitor monitor-destinations 8.8.8.8 count 5
+
+
+!===================================================================
+
+
+
+
+!===================================================================
+set network profiles monitor-profile ping action fail-over interval 5 
+
+
+set rulebase pbf rules "server to B1_B2_Core" from zone Server
+set rulebase pbf rules "server to B1_B2_Core" source "DC server"
+set rulebase pbf rules "server to B1_B2_Core" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "server to B1_B2_Core" application any
+set rulebase pbf rules "server to B1_B2_Core" service any
+set rulebase pbf rules "server to B1_B2_Core" action forward nexthop ip-address 10.10.36.1
+set rulebase pbf rules "server to B1_B2_Core" action forward egress-interface ethernet1/5
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor profile ping
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor disable-if-unreachable yes
+
+
+set rulebase pbf rules "server to B1_B2_Core2" from zone Server
+set rulebase pbf rules "server to B1_B2_Core2" source "DC server"
+set rulebase pbf rules "server to B1_B2_Core2" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "server to B1_B2_Core2" application any
+set rulebase pbf rules "server to B1_B2_Core2" service any
+set rulebase pbf rules "server to B1_B2_Core2" action forward nexthop ip-address 10.10.46.1
+set rulebase pbf rules "server to B1_B2_Core2" action forward egress-interface ethernet1/6
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor profile ping
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor disable-if-unreachable yes
+
+
+set rulebase pbf rules "server to B1_B2_Core2" from zone Server
+set rulebase pbf rules "server to B1_B2_Core2" source "DC server"
+set rulebase pbf rules "server to B1_B2_Core2" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "server to B1_B2_Core2" application any
+set rulebase pbf rules "server to B1_B2_Core2" service any
+set rulebase pbf rules "server to B1_B2_Core2" action forward nexthop ip-address 10.10.46.1
+set rulebase pbf rules "server to B1_B2_Core2" action forward egress-interface ethernet1/6
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor profile ping
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "server to B1_B2_Core2" action forward monitor disable-if-unreachable yes
+!===================================================================
+
+
+
+
+
+!===================================================================
+!===================================================================
+
+
+
+============================================================================================================
+============================================================================================================

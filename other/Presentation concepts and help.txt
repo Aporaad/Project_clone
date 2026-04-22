@@ -1,0 +1,221 @@
+==================================
+- العنوان الرئيسي: High availability and High security in Enterprice Infrastructure - التوافر العالي والأمان الشديد في البنية التحتية للموسسات : تصميم ومحاكاة عملية
+- العنوان الفرعي: مشروع تخرج لنيل درجة البكالوريوس في الأمن السيبراني
+- اسم الطالب: ارسلان خالد الشماري - حافظ الجنداري  - اسامه المشرع
+- اسم المشرف: علي عزان
+- جامعة سبأ/كلية الحاسوب
+ -السنة الدراسية: 2026 - 2025
+==================================
+ 1: شريحة العنوان /الغلاف**
+
+2:
+مقدمه وملخص عن المشروع 
+الدراسات السابقة  ومشكله البحث 
+اهداف المشروع  ونطاق المشروع 
+-----------------------------
+الاخير :
+	- الأدوات والتقنيات وبيئة المحاكاة**
+	- النتائج الخلاصة**
+
+============
+مقدمة: تحديات العصر الرقمي
+==================================
+مفاهيم
+-----------------------------------------4-14
+التوافر العالي -
+ الأمان العالي
+الموازنه مابين الحمايه والتوافر -الصراع والتكامل: التحدي الأكبر -المفاضلة بين الأمان والتوافر
+
+السيرفرات 
+جدران الحماية
+
+هيكل المشروع 
+	مركز البيانات الرئيسي 
+	الفروع الاول  
+	الفروع الثاني 
+	 الربط بين الفروع 
+==================================
+التوافر العالي (HA)  
+----------------------
+ (Downtime) / (Business Continuit) / SPOF
+-إزالة نقاط الفرد الواحدة (Single Points of Failure - SPOFs)
+
+الآليات الرئيسية: التكرار Redundancy وانواعه (Hardware, Link, Service)      
+الانتقال الاحتياطي (Failover): 
+موازنة التحميل (Load Balancing)
+- نماذج التكرار: Active/Passive و Active/Active
+
+- عمليات Failover و Failback
+- Fault Tolerance و Software Scalability
+
+- Backup, Replication, DR
+- مؤشرات RTO و RPO
+
+ معايير Uptime Institute (Tiers I-IV)<br>• طاقة وتبريد زائدين عن الحاجة	Tier III يوفر صيانة دون توقف. Tier IV يوفر أعلى مستوى من تحمل الأعطال.
+
+---------------------------------------------------
+. الأجهزة الطرفية (End Point Devices)
+	- التكرار واكثر من مصدر للشبكه وايضا للطاقه
+	- NIC  /- Backup	Bridge Network /- (MDM) , (VDI) 
+
+3. محولات الشبكة (Switches)
+-port-channel -Ether Channel 
+ - multi spanning-tree  root (mst)
+-(Stacking) تقنيات التكديس =>StackWise Virtual , VSS 
+- بروتوكولات التكرار (HSRP, VRRP)
+
+4. أجهزة التوجيه (Routers)
+- بروتوكولات التكرار FHRP (HSRP, VRRP, GLBP)
+- مسارات شبكة متعددة (Multi-WAN)
+
+- path controller and Traffic Engineer 
+- route-map prefix-list
+-Routing HA 
+
+2. خوادم ويندوز (Windows Server)
+	-Failover Clustering
+	-NIC Teaming
+	-Load Balancing
+	-Replication
+	-(S2D) التخزين المباشرة 
+
+6. مراكز البيانات (Data Centers) و التخزين (Storage)
+# data center 
+- UPS 
+- power
+- Structured Cabling
+: RAID, Replication
+
+• شبكات التخزين (SAN)	-> Synology SHA 
+• التخزين المرفق بالشبكة (NAS)
+• مجموعات التوافر العالي (HA Clusters)
+
+5. جدران الحماية (Firewalls)
+   - ASA Firewall
+   - Fortigate Firewall
+   - Sophos Firewall
+   - Palo Alto Firewall
+==================================
+الامان العالي (High security)
+-----------------------------
+ ثالوث CIA
+التحكم في الوصول (Access Control) / التشفير (Encryption):
+-تقسيم الشبكه والمناطق Segmentation : (Zone /Vlan)
+-- حماية البيانات والاتصالات (SSL/TLS, SSH. )
+
+-LAN Security &  VLAN Attacks
+
+
+Routing/Layer 3 Seurity
+- تشفير وامان OSPF/EIGRP /BGP 
+
+VPN
+
+- تقنيات الكشف والمراقبة
+-IDS / IPS
+--Span Rspan ,Erspan
+Syslog, SNMP
+
+جدران الحماية Firewalls: (PaloAlto,Sophos, FortiGate+ASA) 
+Deep Packet Inspection
+-مثل Stateful, Next-Gen (NGFW)
+-Authentication عبر ويندوز سيرفر 
+access time ,surfing quota ,network traffic quota ,traffic shaping
+Rules and policies :web ,nat file type policy ,user activities
+
+- أمان الخوادم وActive Directory
+مثل (Kerberoasting ,LLMNR ,NTLM وغرها )
+- أمان خوادم الويب
+
+--
+-شهادات امنيه من ويندوز سيرفر
+===============================================
+الصراع والتكامل: التحدي الأكبر -  المفاضلة بين الأمان والتوافر
+------------
+التوافر العالي (HA) قد يضعف الأمان
+-  زيادة مساحة الهجوم (Attack Surface) بسبب كثرة المكونات.
+- إجراءات أمان معقدة قد تمنع الاتصالات الشرعية أثناء الفشل. 
+- بروتوكولات المزامنة بين الخوادم قد تكون غير مشفرة بشكل كافٍ.	
+
+ الأمان العالي (HS) قد يضعف التوافر
+- تحديثات الأمان (Patching) قد تتطلب إعادة تشغيل النظام (Downtime). 
+- سهولة الوصول للصيانة قد تخلق ثغرات أمنية.	
+- قواعد جدار ناري صارمة قد تمنع الفشل التلقائي. 
+ 
+   نقاط التكامل:
+ - الأمان يمنع الهجمات التي تسبب التوقف (مثل هجمات DDoS).
+ - أنظمة التوافر العالي المصممة بشكل آمن تضمن استمرارية العمل حتى أثناء الهجوم.
+
+# - ركز على الفجوة التي يسعى مشروعك لملئها.
+===========================================
+الربط بن الفروع SD-WAN : 
+تم استخدام  MPLS-L3VPN over GRE
+و IPsec over  DMVPN
+VRF
+
+المسار الأساسي (Primary Path) :MPLS
+المسار الاحتياطي (Backup Path): شبكة DMVPN
+
+تقنيات النقل المتقدمة
+2.5.1 MPLS – Architecture & Labels
+2.5.2 DMVPN – NHRP, mGRE, IPsec
+----------------------
+التوجيه (Routing):
+OSPF:  للتوجيه  (Intra-Site) لضمان convergance سريع وكفاءة.
+BGP: يستخدم لتبادل مسارات الشبكة بين المواقع عبر شبكة MPLS.
+
+
+---------------------------------------
+
+3.3 تصميم الاتصال بين المواقع (Inter-Site Connectivity Design):
+3.3.1 تصميم شبكة MPLS: شرح دور BGP في تبادل المسارات.
+3.3.2 تصميم شبكة DMVPN: شرح دور OSPF و NHRP في إنشاء شبكة mesh ديناميكية.
+3.3.3 استراتيجية التوجيه: كيفية دمج OSPF و BGP (Redistribution) وتحديد المسارات المفضلة (Path Preference).
+
+===================
+التوجية بين الفروع
+----
+overlay 	ospf
+underlay	static	
+
+ IGP – OSPF
+ EGP – BGP
+ Route Redistribution
+ Path Selection & Administrative Distance
+====================================================
+بيئة المحاكاة**
+- GNS3 للشبكة
+- VMware/VirtualBox للخوادم
+- التكامل بينهما
+
+==================================
+
+
+======================================
+اشياء اضافه - غير رئيسيه 
+--------------------------------
+=============
+- الاعتماد على Loopbacks
+
+3 قياس Failover Time
+5.5.4 تحليل Packet Loss أثناء التحويل
+
+
+إعداد Spanning Tree
+* تحديد Root Bridge
+* ضبط Priority
+
+* ضبط Route-maps
+* منع Routing Loops
+
+DMVPN باستخدام IPsec
+* ISAKMP Policy
+* Transform Set
+* Crypto Map
+
+NAT
+4.7.4 تطبيق Access Control Lists
+
+Logging و Syslog
+============================================
+

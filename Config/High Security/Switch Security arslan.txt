@@ -1,0 +1,60 @@
+banner [exec,login
+ntp
+
+
+secure boot-config/image
+
+scp/ftp/http 
+ssh crypto/config
+
+login block
+==========================
+access
+----
+port-security
+portfast
+bpduguard ,bpdufilter
+-----
+trunk
+=======================
+CAM Table Attacks
+VLAN Attacks
+Layer 2 Attacks
+DHCP Attacks
+ARP Attacks
+Address Spoofing Attacks
+STP Attacks
+IP Source Guard (IPSG) 
+-Storm Control
+======================================
+-------------------------------
+MAC Table Attacks
+-Port Security
+-------------------------------
+VLAN Attacks
+-VLAN hopping 
+- Switch Spoofing (Trunk Negotiation Attack)
+-Double Tagging
+-PVLAN
+-------------------------------
+DHCP Attacks
+-DHCP Snooping
+-DHCP Starvation 
+-------------------------------
+ARP Attacks
+Address Spoofing Attacks
+-Arp inspection
+-Dynamic ARP Inspection (DAI)
+-------------------------------
+STP Attacks
+-IP Source Guard (IPSG)
+-Bpdu Guard 
+-Bpdu filter
+-Port Fast
+-Root Guard
+
+-Loop guard
+-skew detection
+-UDLD 
+--------------------------------
+=====================================

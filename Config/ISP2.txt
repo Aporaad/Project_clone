@@ -1,0 +1,110 @@
+=======================================================
+hostname ISP2
+int Loopback1
+ ip add 82.82.81.1 255.255.255.255
+
+ip vrf HA
+ rd 100:1
+ route-target both 100:1
+
+! ---------- interface  ----------
+interface g0/0
+ description TO DC-RE1 for vpn
+ ip address 82.2.1.2 255.255.255.252
+ no sh
+
+interface g3/0
+ description TO DC-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+!---- B1 ----
+interface g1/0
+ description TO B1-RE1 for vpn
+ ip address 82.2.3.2 255.255.255.252
+ no sh
+
+interface g2/0
+ description TO B1-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.4.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+!---- B2 ----
+interface g4/0
+ description TO B2-RE1 for vpn
+ ip address 82.2.5.2 255.255.255.252
+ no sh
+
+interface g5/0
+ description TO B2-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.6.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.81.1
+
+======================================================
+============================================
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.81.1
+ net 82.2.1.0 0.0.0.3 area 0
+ net 82.2.3.0 0.0.0.3 area 0
+ net 82.2.5.0 0.0.0.3 area 0
+
+
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls ldp router-id Loopback1 force
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-OSPF permit 10
+ set tag 100
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+
+route-map OSPF-TO-BGP permit 20
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.2 remote-as 100 
+ neighbor 82.82.82.2 update-source Loopback1
+ neighbor 82.82.82.2 next-hop-self
+ neighbor 82.82.82.2 password P2X4Phahs
+ neighbor 82.82.82.3 remote-as 100 
+ neighbor 82.82.82.3 update-source Loopback1
+ neighbor 82.82.82.3 next-hop-self
+ neighbor 82.82.82.3 password P2X4Phahs
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.2 activate
+  neighbor 82.82.82.2 send-community both
+  neighbor 82.82.82.3 activate
+  neighbor 82.82.82.3 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.1
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.82.1
+no network 1.1.1.0 0.0.0.3 area 0
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+===============================================

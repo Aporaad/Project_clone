@@ -1,0 +1,220 @@
+===============================================================
+hostname DCSer-DSW1
+
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+
+interface Loopback0
+ ip address 172.16.10.7 255.255.255.255
+vlan 100
+ name server
+interface Vlan 100
+ description for server
+ ip address 192.168.100.101 255.255.255.0
+ no sh
+ vrrp 10 ip 192.168.100.100
+ vrrp 10 priority 150
+ vrrp 10 preempt
+ vrrp 10 authentication text p2x4p/*-
+
+!-------------interface ---------
+interface e1/0
+ description TO DC-FPA1 firewall
+ no switchport
+ ip address 10.10.75.1 255.255.255.252
+ ip ospf 1 area 0
+
+interface e1/1
+ description TO DC-FPA2 firewall
+ no switchport
+ ip address 10.10.76.1 255.255.255.252
+ ip ospf 1 area 0
+
+!-----link  -------!
+interface e0/2
+ description Link to DC-DSW2 e0/2 for all vlan
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan all
+ switchport nonegotiate
+ spanning-tree link-type point-to-point
+ spanning-tree cost 1000
+ no sh
+  
+interface Ethernet0/3
+ description Link to DC-DSW1 e0/3 for routing
+ no switchport
+ ip address 10.10.78.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+!-----Port-channel 2--------
+interface range e3/0-1
+ description TO DC-Ser-ASW1 with port-channel 2 for Server
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ description TO DC-Ser-ASW1 for Server
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+!---------
+
+
+
+
+!---------OSPF-----!
+router ospf 1
+ router-id 172.16.10.7
+ network 172.16.10.7 0.0.0.0 area 0
+ network 10.10.0.0 0.0.255.255 area 0
+===============================================================
+hostname DCSer-DS2
+
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+
+interface Loopback0
+ ip address 172.16.10.8 255.255.255.255
+vlan 100
+ name server
+interface Vlan 100
+ ip address 192.168.100.102 255.255.255.0
+ no sh
+ vrrp 10 ip 192.168.100.100
+ vrrp 10 priority 150
+ vrrp 10 preempt
+ vrrp 10 authentication text p2x4p/*-
+
+!-------------interface ---------
+interface e1/0
+ description TO DC-FPA1
+ no switchport
+ ip address 10.10.85.1 255.255.255.252
+ ip ospf 1 area 0
+no  ip ospf authentication key-chain az
+no ip ospf network point-to-point
+
+interface e1/1
+ description TO DC-FPA2
+ no switchport
+ ip address 10.10.86.1 255.255.255.252
+ ip ospf 1 area 0
+no  ip ospf authentication key-chain az
+no ip ospf network point-to-point
+!-----link  -------!
+interface e0/2
+ description Link to DC-DSW1 e0/2 for all vlan
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan all
+ switchport nonegotiate
+ spanning-tree link-type point-to-point
+ spanning-tree cost 1000
+ no sh
+  
+interface Ethernet0/3
+ description Link to DC-DSW1 e0/3 for routing
+ no switchport
+ ip address 10.10.78.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+!-------------Port-channel 2 ---------
+interface range e0/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface port-channel2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 2 mode active
+!-------------OSPF ---------
+router ospf 1
+ router-id 172.16.10.8
+ network 172.16.10.8 0.0.0.0 area 0
+ network 10.0.0.0 0.255.255.255 area 0
+
+========================================
+hostname DCSer-ASW
+vlan 100
+ name server
+
+interface range e0/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface port-channel 1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 1 mode active
+
+interface range e3/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+
+interface e1/0
+ no sh
+ switchport mode access 
+ switchport access vlan 100
+
+
+=====================================
+=====================================
+show etherchannel summary
+show run interface e0/2
+show run interface e0/3
+show run interface port-channel1
+show ip interface brief
+
+

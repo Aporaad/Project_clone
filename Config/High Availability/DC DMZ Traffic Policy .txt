@@ -1,0 +1,149 @@
+=====================================================
+hostname DC-DMZ-DSW1
+
+ip access-list extended VLAN_Self
+ permit ip 192.168.130.0 0.0.0.255 192.168.130.0 0.0.0.255
+ permit ip 192.168.130.0 0.0.0.255 172.16.10.9 0.0.0.0
+ permit ip 192.168.130.0 0.0.0.255 172.16.10.10 0.0.0.0
+ permit ip 192.168.130.0 0.0.0.255 10.10.109.0 0.0.0.3
+
+ip access-list extended ACL_LAN-To-BRANCH
+ permit ip any 192.168.0.0 0.0.255.255
+ permit ip any 172.16.0.0 0.0.255.255
+ permit ip any 10.0.0.0 0.255.255.255
+
+
+!-------------------------------------
+ip sla 1
+ icmp-echo 10.10.35.2 source-interface e1/1 
+ timeout 5000
+ frequency 5
+ip sla schedule 1 life forever start-time now
+ip sla 2
+ icmp-echo 10.10.36.2 source-interface e1/0
+ timeout 5000
+ frequency 5
+ip sla schedule 2 life forever start-time now
+!
+track 1 ip sla 1 reachability
+track 2 ip sla 2 reachability
+! -----------------------
+route-map PBR_VLAN-100 permit 5
+ match ip address VLAN_Self
+route-map PBR_VLAN-100 permit 10
+ match ip address ACL_LAN-To-BRANCH
+ set ip next-hop verify-availability 10.10.95.2 1 track 1
+ set ip next-hop verify-availability 10.10.96.2 2 track 2 
+ set ip next-hop 10.10.109.2 
+route-map PBR_VLAN-100 permit 30
+ set ip next-hop verify-availability 10.10.96.2 1 track 11
+ set ip next-hop verify-availability 10.10.95.2 2 track 1
+ set ip next-hop  10.10.109.2
+int vlan300
+ ip policy route-map PBR_VLAN-100
+
+ip route 10.10.35.2 255.255.255.255 e1/1 10.10.95.2
+ip route 10.10.36.2 255.255.255.255 e1/0 10.10.96.2
+
+
+!-------------------------------------------------------
+
+ip route 8.8.8.8 255.255.255.255 10.10.96.2
+ip sla 11
+ icmp-echo 8.8.8.8 source-interface e1/0
+ frequency 5
+ timeout 5000
+ip sla schedule 11 life forever start-time now
+track 11 ip sla 11 reachability
+ delay down 2 up 3
+
+ip route 0.0.0.0 0.0.0.0 e1/0 10.10.96.2 10 track 11
+ip route 0.0.0.0 0.0.0.0 e1/1 10.10.95.2 20 track 1
+ip route 0.0.0.0 0.0.0.0 e0/3 10.10.109.2 30
+
+
+int e0/3
+ ip ospf cost 2
+
+=====================================================
+hostname DC-DMZ-DSW2
+
+ip access-list extended VLAN_Self
+ permit ip 192.168.130.0 0.0.0.255 192.168.130.0 0.0.0.255
+ permit ip 192.168.130.0 0.0.0.255 172.16.10.9 0.0.0.0
+ permit ip 192.168.130.0 0.0.0.255 172.16.10.10 0.0.0.0
+ permit ip 192.168.130.0 0.0.0.255 10.10.109.0 0.0.0.3
+
+ip access-list extended ACL_LAN-To-BRANCH
+ permit ip any 192.168.0.0 0.0.255.255
+ permit ip any 172.16.0.0 0.0.255.255
+ permit ip any 10.0.0.0 0.255.255.255
+
+
+!-------------------------------------
+ip sla 1
+ icmp-echo 10.10.35.2 source-interface e1/1
+ timeout 5000
+ frequency 5
+ip sla schedule 1 life forever start-time now
+ip sla 2
+ icmp-echo 10.10.36.2 source-interface e1/0
+ timeout 5000
+ frequency 5
+ip sla schedule 2 life forever start-time now
+!
+track 1 ip sla 1 reachability
+track 2 ip sla 2 reachability
+! -----------------------
+route-map PBR_VLAN-100 permit 5
+ match ip address VLAN_Self
+route-map PBR_VLAN-100 permit 10
+ match ip address ACL_LAN-To-BRANCH
+ set ip next-hop verify-availability 10.10.105.2 1 track 1
+ set ip next-hop verify-availability 10.10.106.2 2 track 2 
+ set ip next-hop 10.10.109.1
+route-map PBR_VLAN-100 permit 30
+ set ip next-hop verify-availability 10.10.106.2 1 track 11
+ set ip next-hop verify-availability 10.10.105.2 2 track 1
+ set ip next-hop  10.10.109.1
+int vlan100
+ ip policy route-map PBR_VLAN-100
+
+ip route 10.10.35.2 255.255.255.255 e1/1 10.10.105.2
+ip route 10.10.36.2 255.255.255.255 e1/0 10.10.106.2
+
+
+!-------------------------------------------------------
+
+ip route 8.8.8.8 255.255.255.255 10.10.106.2
+ip sla 11
+ icmp-echo 8.8.8.8 source-interface e1/0
+ frequency 5
+ timeout 5000
+ip sla schedule 11 life forever start-time now
+track 11 ip sla 11 reachability
+ delay down 2 up 3
+
+ip route 0.0.0.0 0.0.0.0 e1/0 10.10.106.2 10 track 11
+ip route 0.0.0.0 0.0.0.0 e1/1 10.10.105.2 20 track 1
+ip route 0.0.0.0 0.0.0.0 e0/3 10.10.109.1 30
+
+
+int e0/3
+ ip ospf cost 2
+
+
+=====================================================
+ip access-list extended ACL_SLA1
+ permit ip 10.10.85.1 0.0.0.0 10.10.12.3 0.0.0.0
+ip access-list extended  ACL_SLA2
+ permit ip 10.10.86.1 0.0.0.0 10.10.12.3 0.0.0.0
+
+route-map PBR_SLA permit 10
+ match ip address  ACL_SLA1
+ set ip next-hop 10.10.85.2
+route-map PBR_SLA permit 20
+ match ip address  ACL_SLA2
+ set ip next-hop 10.10.86.2
+int range e1/0-1
+ ip policy route-map PBR_SLA

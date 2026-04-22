@@ -1,0 +1,1178 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+========================================
+hostname PE1
+int Loopback1
+ ip add 82.82.82.1 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:1
+ route-target both 100:1
+
+interface g0/0
+ description TO PE2
+ ip address 82.1.10.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g1/0
+ description TO PE3
+ ip address 82.1.20.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO DC-RE1
+ ip vrf forwarding HA
+ ip address 82.1.1.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+interface g4/0
+ description TO DC-RE2
+ ip vrf forwarding HA
+ ip address 82.1.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls ldp router-id Loopback1 force
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-OSPF permit 10
+ set tag 100
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+
+route-map OSPF-TO-BGP permit 20
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.2 remote-as 100 
+ neighbor 82.82.82.2 update-source Loopback1
+ neighbor 82.82.82.2 next-hop-self
+ neighbor 82.82.82.2 password P2X4Phahs
+ neighbor 82.82.82.2 ttl-security hops 2
+ neighbor 82.82.82.3 remote-as 100 
+ neighbor 82.82.82.3 update-source Loopback1
+ neighbor 82.82.82.3 next-hop-self
+ neighbor 82.82.82.3 password P2X4Phahs
+ neighbor 82.82.82.3 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.2 activate
+  neighbor 82.82.82.2 send-community both
+  neighbor 82.82.82.3 activate
+  neighbor 82.82.82.3 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.1
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.82.1
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+===============================================
+hostname PE2
+int Loopback1
+ ip add 82.82.82.2 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:2
+ route-target both 100:1
+
+interface g0/0
+ description TO PE1
+ ip address 82.1.10.2 255.255.255.252
+ no sh
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+
+interface g1/0
+ description TO PE3
+ ip address 82.1.30.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO B1-RE1
+ ip vrf forwarding HA
+ ip address 82.1.3.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+interface g4/0
+ description TO B1-RE2
+ ip vrf forwarding HA
+ ip address 82.1.4.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+! ---------- MPLS ----------
+mpls label range 200 299
+mpls ldp router-id Loopback1 force
+
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-OSPF permit 10
+ set tag 100
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+
+route-map OSPF-TO-BGP permit 20
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.1 remote-as 100 
+ neighbor 82.82.82.1 update-source Loopback1
+ neighbor 82.82.82.1 next-hop-self
+ neighbor 82.82.82.1 password P2X4Phahs
+ neighbor 82.82.82.1 ttl-security hops 2
+ neighbor 82.82.82.3 remote-as 100 
+ neighbor 82.82.82.3 update-source Loopback1
+ neighbor 82.82.82.3 next-hop-self
+ neighbor 82.82.82.3 password P2X4Phahs
+ neighbor 82.82.82.3 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.1 activate
+  neighbor 82.82.82.1 send-community both
+  neighbor 82.82.82.3 activate
+  neighbor 82.82.82.3 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.2
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.82.2
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+
+===============================================
+hostname PE3
+int Loopback1
+ ip add 82.82.82.3 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:3
+ route-target both 100:1
+
+interface g0/0
+ description TO PE1
+ ip address 82.1.20.2 255.255.255.252
+ ip ospf network point-to-point
+ no sh
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+
+interface g1/0
+ description TO PE2
+ ip address 82.1.30.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO B2-RE1
+ ip vrf forwarding HA
+ ip address 82.1.5.2 255.255.255.252
+ no sh
+
+interface g4/0
+ description TO B2-RE2
+ ip vrf forwarding HA
+ ip address 82.1.6.2 255.255.255.252
+ no sh
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls ldp router-id Loopback1 force
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-EIGRP permit 10
+ set metric 10000 100 255 1 1500
+ set tag 100
+
+route-map EIGRP-TO-BGP deny 10
+ match tag 100
+
+route-map EIGRP-TO-BGP permit 20
+
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.1 remote-as 100 
+ neighbor 82.82.82.1 update-source Loopback1
+ neighbor 82.82.82.1 next-hop-self
+ neighbor 82.82.82.1 password P2X4Phahs
+ neighbor 82.82.82.1 ttl-security hops 2
+ neighbor 82.82.82.2 remote-as 100 
+ neighbor 82.82.82.2 update-source Loopback1
+ neighbor 82.82.82.2 next-hop-self
+ neighbor 82.82.82.2 password P2X4Phahs
+ neighbor 82.82.82.2 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.1 activate
+  neighbor 82.82.82.1 send-community both
+  neighbor 82.82.82.2 activate
+  neighbor 82.82.82.2 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute eigrp 100 route-map EIGRP-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.3
+
+! ---------- EIGRP  ----------
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  network 82.1.5.0 0.0.0.3
+  topology base
+   redistribute bgp 100 route-map BGP-TO-EIGRP
+  exit-af-topolo
+ exit-address-family
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=======================================================
+hostname ISP2
+int Loopback1
+ ip add 82.82.81.1 255.255.255.255
+
+ip vrf HA
+ rd 100:1
+ route-target both 100:1
+
+! ---------- interface  ----------
+interface g0/0
+ description TO DC-RE1 for vpn
+ ip address 82.2.1.2 255.255.255.252
+ no sh
+
+interface g3/0
+ description TO DC-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+!---- B1 ----
+interface g1/0
+ description TO B1-RE1 for vpn
+ ip address 82.2.3.2 255.255.255.252
+ no sh
+
+interface g2/0
+ description TO B1-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.4.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+!---- B2 ----
+interface g4/0
+ description TO B2-RE1 for vpn
+ ip address 82.2.5.2 255.255.255.252
+ no sh
+
+interface g5/0
+ description TO B2-RE2 for mpls
+ ip vrf forwarding HA
+ ip address 82.2.6.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 5
+ no sh
+
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.81.1
+
+======================================================
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=======================================================
+configure terminal
+hostname DC-RE1
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.1 255.255.255.255
+ ip ospf 1 area 0
+!
+interface GigabitEthernet0/0
+ description Link to DC-Core1
+ ip address 10.10.13.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+!
+interface GigabitEthernet1/0
+ description Link to DC-Core2 (Redundant)
+ ip address 10.10.14.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+!
+interface g2/0
+ description Link to DC-RE2
+ ip address 10.10.12.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for mpls
+ ip address 82.1.1.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ duplex full
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 G0/0 for vpn
+ ip address 82.2.1.1 255.255.255.252
+ no shutdown
+!
+
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.10.1
+ network 10.10.0.0 0.0.255.255 area 0
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.1.2
+
+! ---------- NAT  ----------
+access-list 10 permit  10.10.0.0  0.0.255.255
+access-list 10 permit  172.16.10.0 0.0.0.255
+ip nat inside source list 10 interface g4/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int g4/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.10.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.2.4.1
+crypto isakmp key P2X4Phahs address 82.2.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.20.1 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g4/0
+ tunnel mode gre multipoint 
+ ip nhrp network-id 123
+ ip nhrp map multicast dynamic 
+ ip nhrp authentication P2X4Phahs
+ ip nhrp redirect
+ tunnel protection ipsec profile proaz
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+=======================================================
+configure terminal
+hostname DC-RE2
+!
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.2 255.255.255.255
+ ip virtual-reassembly in
+ ip ospf 1 area 0
+!
+interface GigabitEthernet0/0
+ description Link to DC-Core1
+ ip address 10.10.23.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface GigabitEthernet1/0
+ description Link to DC-Core2 
+ ip address 10.10.24.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface g2/0
+ description Link to DC-RE1 
+ ip address 10.10.12.2 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for vpn
+ ip address 82.1.2.1 255.255.255.252
+ no shutdown
+ ip virtual-reassembly in
+ duplex full
+ ip nat outside
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for mpls
+ ip address 82.2.2.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip virtual-reassembly in
+ duplex full
+!
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.10.2
+ network 10.10.0.0 0.0.255.255 area 0
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.2.4
+
+
+! ---------- NAT  ----------
+access-list 10 permit  10.10.0.0  0.0.255.255
+access-list 10 permit  172.16.10.0 0.0.0.255
+ip nat inside source list 10 interface g3/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int  g3/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.10.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.1.4.1
+crypto isakmp key P2X4Phahs address 82.1.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.10.1 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g3/0
+ tunnel mode gre multipoint 
+ ip nhrp network-id 123
+ ip nhrp map multicast dynamic 
+ ip nhrp authentication P2X4Phahs
+ ip nhrp redirect
+ tunnel protection ipsec profile proaz
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+
+=============================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+=======================================================
+configure terminal
+hostname B1-RE1
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.20.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Link to B1-Sophos1
+ ip address 10.20.13.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+!
+interface GigabitEthernet1/0
+ description Link to B1-Sophos2
+ ip address 10.20.14.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+!
+interface g2/0
+ description Link to B1-RE2
+ ip address 10.20.12.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for mpls
+ ip address 82.1.3.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ duplex full
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for vpn
+ ip address 82.2.3.1 255.255.255.252
+ no shutdown
+!
+
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.20.1
+ network 10.0.0.0 0.255.255.255 area 0
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.3.2
+
+! ---------- NAT  ----------
+access-list 10 permit  10.20.0.0  0.0.255.255
+access-list 10 permit  172.16.20.0 0.0.0.255
+ip nat inside source list 10 interface g4/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int g4/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.20.0.0 0.0.255.255 10.0.0.0 0.255.255.255 
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.2.1.1
+crypto isakmp key P2X4Phahs address 82.2.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.20.2 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g4/0
+ ip nhrp authentication P2X4Phahs
+ ip nhrp network-id 123
+ tunnel protection ipsec profile proaz
+ tunnel mode gre multipoint 
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+ ip nhrp map 10.10.20.1 82.2.1.1
+ ip nhrp map multicast 82.2.1.1
+ ip nhrp nhs 10.10.20.1
+ ip nhrp shortcut
+
+
+=======================================================
+
+configure terminal
+hostname B1-RE2
+!
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.20.2 255.255.255.255
+ ip virtual-reassembly in
+ ip ospf 1 area 0
+!
+interface GigabitEthernet0/0
+ description Link to B1-Sophos1
+ ip address 10.20.23.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface GigabitEthernet1/0
+ description Link to B1-Sophos2
+ ip address 10.20.24.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface g2/0
+ description Link to DC-RE1 
+ ip address 10.20.12.2 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for vpn
+ ip address 82.1.4.1 255.255.255.252
+ no shutdown
+ ip virtual-reassembly in
+ duplex full
+ ip nat outside
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for mpls
+ ip address 82.2.4.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip virtual-reassembly in
+ duplex full
+!
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.20.2
+ network 10.20.0.0 0.0.255.255 area 0
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.4.1
+
+
+! ---------- NAT  ----------
+access-list 10 permit  10.20.0.0  0.0.255.255
+access-list 10 permit  172.16.20.0 0.0.0.255
+ip nat inside source list 10 interface g3/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int  g3/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.20.0.0 0.0.255.255 10.0.0.0 0.255.255.255 
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.1.1.1
+crypto isakmp key P2X4Phahs address 82.1.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.10.2 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g3/0
+ ip nhrp authentication P2X4Phahs
+ ip nhrp network-id 123
+ tunnel protection ipsec profile proaz
+ tunnel mode gre multipoint 
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+ ip nhrp map 10.10.10.1 82.1.2.1
+ ip nhrp map multicast 82.1.2.1
+ ip nhrp nhs 10.10.10.1
+ ip nhrp shortcut
+
+
+
+
+=============================================================
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+=======================================================
+configure terminal
+hostname B2-RE1
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+key chain az
+ key 1    
+  key-string p2x4pD9R6Y++
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.30.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Link to B2-FG Firewall
+ ip address 10.30.13.1 255.255.255.252
+ no shutdown
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 az
+!
+interface GigabitEthernet1/0
+ description Link to B2-ASA Firewall
+ ip address 10.30.14.1 255.255.255.252
+ no shutdown
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 az
+!
+interface g2/0
+ description Link to B2-RE2
+ ip address 10.30.12.1 255.255.255.252
+ no shutdown
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 az
+
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for mpls
+ ip address 82.1.5.1 255.255.255.252
+ no shutdown
+ duplex full
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for vpn
+ ip address 82.2.6.1 255.255.255.252
+ no shutdown
+!
+
+! ---------- EIGRP ----------
+router eigrp 100
+ eigrp router-id 172.16.30.1
+ network 82.1.5.0 0.0.0.3
+ network 10.30.0.0 0.0.255.255 
+ network 172.16.30.0 0.0.0.255
+ redistribute ospf 1 match internal external 1 external 2 metric 10000 100 255 1 1500
+
+!         
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.30.1
+ network 10.30.0.0 0.0.255.255 area 0
+ redistribute eigrp 100 subnets
+
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.5.1
+
+
+! ---------- NAT  ----------
+access-list 10 permit  10.30.0.0  0.0.255.255
+access-list 10 permit  172.16.30.0 0.0.0.255
+ip nat inside source list 10 interface g4/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int g4/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.30.0.0 0.0.255.255 10.0.0.0 0.255.255.255 
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.2.1.1
+crypto isakmp key P2X4Phahs address 82.2.4.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.20.3 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g4/0
+ ip nhrp authentication P2X4Phahs
+ ip nhrp network-id 123
+ tunnel protection ipsec profile proaz
+ tunnel mode gre multipoint 
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+ ip nhrp map 10.10.20.1 82.2.1.1
+ ip nhrp map multicast 82.2.1.1
+ ip nhrp nhs 10.10.20.1
+ ip nhrp shortcut
+
+=======================================================
+configure terminal
+hostname B2-RE2
+!
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+key chain az
+ key 1    
+  key-string p2x4pD9R6Y++
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.30.2 255.255.255.255
+ 
+!
+interface GigabitEthernet0/0
+ description Link to B2-FG FIREWALL
+ ip address 10.30.23.1 255.255.255.252
+ no shutdown
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 az
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface GigabitEthernet1/0
+ description Link to B2-ASA FIREWALL
+ ip address 10.30.24.1 255.255.255.252
+ no shutdown
+ ip ospf 1 area 0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface g2/0
+ description Link to B2-RE1 
+ ip address 10.30.12.2 255.255.255.252
+ no shutdown
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 az
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for vpn
+ ip address 82.1.6.1 255.255.255.252
+ no shutdown
+ ip virtual-reassembly in
+ duplex full
+ ip nat outside
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for mpls
+ ip address 82.2.6.1 255.255.255.252
+ no shutdown
+ ip virtual-reassembly in
+ duplex full
+!
+
+
+
+! ---------- EIGRP ----------
+router eigrp 100
+ eigrp router-id 172.16.30.2
+ network 82.1.6.0 0.0.0.3
+ network 10.30.0.0 0.0.255.255 
+ network 172.16.30.0 0.0.0.255
+ redistribute ospf 1 match internal external 1 external 2  metric 10000 100 255 1 1500
+
+!         
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.30.2
+ network 10.30.0.0 0.0.255.255 area 0
+ redistribute eigrp 100 subnets
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.6.1
+
+
+
+! ---------- NAT  ----------
+access-list 10 permit  10.30.0.0  0.0.255.255
+access-list 10 permit  172.16.30.0 0.0.0.255
+ip nat inside source list 10 interface g3/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int  g3/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.30.0.0 0.0.255.255 10.0.0.0 0.255.255.255 
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.1.2.1
+crypto isakmp key P2X4Phahs address 82.1.4.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.10.3 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g3/0
+ ip nhrp authentication P2X4Phahs
+ ip nhrp network-id 123
+ tunnel protection ipsec profile proaz
+ tunnel mode gre multipoint 
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+ ip nhrp map 10.10.10.1 82.1.2.1
+ ip nhrp map multicast 82.1.2.1
+ ip nhrp nhs 10.10.10.1
+ ip nhrp shortcut
+ 
+
+
+=============================================================
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

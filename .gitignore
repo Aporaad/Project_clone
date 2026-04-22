@@ -1,0 +1,7 @@
+/project-files/captures
+*.vmdk
+*.qcow2
+*.iso
+*.log
+*.rar
+*.img

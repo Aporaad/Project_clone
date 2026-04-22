@@ -1,0 +1,262 @@
+=============================================================
+hostname PE1
+
+ip prefix-list OSPF-IN-FILTER seq 5 permit 10.10.0.0/16 le 32
+ip prefix-list OSPF-IN-FILTER seq 10 permit 172.16.10.0/24 le 32
+ip prefix-list OSPF-IN-FILTER seq 15 permit 192.168.8.0/21 le 32
+ip prefix-list OSPF-IN-FILTER seq 16 permit 192.168.16.0/22 le 32
+ip prefix-list OSPF-IN-FILTER seq 25 deny 0.0.0.0/0
+
+router ospf 1  vrf HA
+ distribute-list prefix OSPF-IN-FILTER in
+
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+ distance ospf external 250
+
+!---- BGP -------
+ip prefix-list BGP-IN-FILTER seq 5 permit 10.20.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 6 permit 10.30.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 10 permit 172.16.20.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 11 permit 172.16.30.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 15 permit 192.168.20.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 16 permit 192.168.24.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 17 permit 192.168.30.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 18 permit 192.168.32.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 21 permit 82.1.0.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 25 deny 0.0.0.0/0
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+   distribute-list prefix BGP-IN-FILTER in     
+
+address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  distance bgp 90 90 90
+  distance 20 10.30.0.0 0.0.255.255
+  distance 20 172.16.30.0 0.0.0.255
+
+!-------------------------
+ip prefix-list HA-NETWORKS seq 5 permit 10.0.0.0/8 le 32
+ip prefix-list HA-NETWORKS seq 10 permit 172.16.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 15 permit 192.168.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 20 permit 82.1.1.0/30
+ip prefix-list HA-NETWORKS seq 21 permit 82.1.3.0/30
+ip prefix-list HA-NETWORKS seq 22 permit 82.1.5.0/30
+ip prefix-list HA-NETWORKS seq 23 permit 82.2.1.0/30
+ip prefix-list HA-NETWORKS seq 24 permit 82.2.3.0/30
+ip prefix-list HA-NETWORKS seq 25 permit 82.2.5.0/30
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+!         
+route-map OSPF-TO-BGP permit 20
+ match ip address prefix-list HA-NETWORKS
+!         
+route-map BGP-TO-OSPF permit 10
+ match ip address prefix-list HA-NETWORKS
+ set metric-type type-1
+ set tag 100
+
+router ospf 1  vrf HA
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+=============================================================
+hostname PE2
+
+ip prefix-list OSPF-IN-FILTER seq 5 permit 10.20.0.0/16 le 32
+ip prefix-list OSPF-IN-FILTER seq 10 permit 172.16.20.0/24 le 32
+ip prefix-list OSPF-IN-FILTER seq 15 permit 192.168.20.0/22 le 32
+ip prefix-list OSPF-IN-FILTER seq 16 permit 192.168.24.0/22 le 32
+ip prefix-list OSPF-IN-FILTER seq 25 deny 0.0.0.0/0
+
+router ospf 1  vrf HA
+ distribute-list prefix OSPF-IN-FILTER in
+
+router ospf 1 vrf HA
+ router-id 172.16.20.82
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+ default-information originate metric 10 metric-type 1
+ distance 100 82.1.3.1 0.0.0.0
+
+!------------ BGP ---------------
+ip prefix-list BGP-IN-FILTER seq 5 permit 10.10.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 6 permit 10.30.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 10 permit 172.16.10.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 11 permit 172.16.30.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 15 permit 192.168.8.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 16 permit 192.168.16.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 17 permit 192.168.30.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 18 permit 192.168.32.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 21 permit 82.1.0.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 25 deny 0.0.0.0/0
+router bgp 100                                           
+ address-family ipv4 vrf HA
+   distribute-list prefix BGP-IN-FILTER in     
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  distance bgp 90 90 90
+  distance 10 82.82.82.1 0.0.0.0 10                          
+
+!------------ Redistribute -------------
+ip prefix-list HA-NETWORKS seq 5 permit 10.0.0.0/8 le 32
+ip prefix-list HA-NETWORKS seq 10 permit 172.16.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 15 permit 192.168.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 20 permit 82.1.1.0/30
+ip prefix-list HA-NETWORKS seq 21 permit 82.1.3.0/30
+ip prefix-list HA-NETWORKS seq 22 permit 82.1.5.0/30
+ip prefix-list HA-NETWORKS seq 23 permit 82.2.1.0/30
+ip prefix-list HA-NETWORKS seq 24 permit 82.2.3.0/30
+ip prefix-list HA-NETWORKS seq 25 permit 82.2.5.0/30
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+!         
+route-map OSPF-TO-BGP permit 20
+ match ip address prefix-list HA-NETWORKS
+!         
+route-map BGP-TO-OSPF permit 10
+ match ip address prefix-list HA-NETWORKS
+ set tag 100
+
+router ospf 1 vrf HA
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+!------------------- ----------------------
+ip access-list extended ACL_LAN-To-BRANCH-1
+ permit ip any 10.10.0.0 0.0.255.255
+ permit ip any 172.16.10.0 0.0.0.255
+ permit ip any 192.168.8.0 0.0.7.255
+ permit ip any 192.168.16.0 0.0.3.255
+ip access-list extended ACL_LAN-To-BRANCH-3
+ permit ip any 10.30.0.0 0.0.255.255
+ permit ip any 172.16.30.0 0.0.0.255
+ permit ip any 192.168.30.0 0.0.1.255
+ permit ip any 192.168.32.0 0.0.7.255
+
+route-map PBR_LAN-To-BRANCH permit 10
+ match ip address ACL_LAN-To-BRANCH-1
+ set ip next-hop 82.1.10.1
+!         
+route-map PBR_LAN-To-BRANCH permit 20
+ match ip address ACL_LAN-To-BRANCH-3
+
+interface GigabitEthernet3/0
+ ip policy route-map PBR_LAN-To-BRANCH
+!--------------- --------------
+access-list 10 permit 10.10.0.0 0.0.255.255
+access-list 10 permit 172.16.30.0 0.0.0.255
+access-list 10 permit 192.168.8.0 0.0.7.255
+access-list 10 permit 192.168.16.0 0.0.3.255
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+  distance bgp 90 90 90
+  distance 10 82.82.82.1 0.0.0.0 10  
+=============================================================
+=============================================================
+hostname PE3
+
+ip prefix-list EIGRP-IN-FILTER seq 5 permit 10.30.0.0/16 le 32
+ip prefix-list EIGRP-IN-FILTER seq 10 permit 172.16.30.0/24 le 32
+ip prefix-list EIGRP-IN-FILTER seq 15 permit 192.168.30.0/22 le 32
+ip prefix-list EIGRP-IN-FILTER seq 16 permit 192.168.32.0/21 le 32
+ip prefix-list EIGRP-IN-FILTER seq 25 deny 0.0.0.0/0
+
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  topology base
+   distribute-list prefix EIGRP-IN-FILTER in   
+
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  topology base
+   distance eigrp 90 250
+   redistribute bgp 100 route-map BGP-TO-EIGRP
+  exit-af-topology
+  network 82.1.5.0 0.0.0.3
+  network 82.1.6.0 0.0.0.3
+
+!------------ BGP ---------------
+ip prefix-list BGP-IN-FILTER seq 5 permit 10.10.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 6 permit 10.20.0.0/16 le 32
+ip prefix-list BGP-IN-FILTER seq 10 permit 172.16.10.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 11 permit 172.16.20.0/24 le 32
+ip prefix-list BGP-IN-FILTER seq 15 permit 192.168.8.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 16 permit 192.168.16.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 17 permit 192.168.20.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 18 permit 192.168.24.0/22 le 32
+ip prefix-list BGP-IN-FILTER seq 21 permit 82.1.0.0/21 le 32
+ip prefix-list BGP-IN-FILTER seq 25 deny 0.0.0.0/0
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+   distribute-list prefix BGP-IN-FILTER in     
+
+ address-family ipv4 vrf HA
+  redistribute eigrp 100 route-map EIGRP-TO-BGP
+  distance bgp 20 20 30                        
+
+!------------ Redistribute -------------
+ip prefix-list HA-NETWORKS seq 5 permit 10.0.0.0/8 le 32
+ip prefix-list HA-NETWORKS seq 10 permit 172.16.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 15 permit 192.168.0.0/16 le 32
+ip prefix-list HA-NETWORKS seq 20 permit 82.1.1.0/30
+ip prefix-list HA-NETWORKS seq 21 permit 82.1.3.0/30
+ip prefix-list HA-NETWORKS seq 22 permit 82.1.5.0/30
+ip prefix-list HA-NETWORKS seq 23 permit 82.2.1.0/30
+ip prefix-list HA-NETWORKS seq 24 permit 82.2.3.0/30
+ip prefix-list HA-NETWORKS seq 25 permit 82.2.5.0/30
+
+route-map EIGRP-TO-BGP deny 10
+ match tag 100
+!         
+route-map EIGRP-TO-BGP permit 20
+ match ip address prefix-list HA-NETWORKS
+ set local-preference 200
+ set community 6553601 additive
+!         
+route-map BGP-TO-EIGRP permit 10
+ match ip address prefix-list HA-NETWORKS
+ set metric 10000 100 255 1 1500
+ set tag 100
+
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  topology base
+   redistribute bgp 100 route-map BGP-TO-EIGRP
+
+router bgp 100                                           
+ address-family ipv4 vrf HA
+  redistribute eigrp 100 route-map EIGRP-TO-BGP
+
+
+!-------------- --------------------------------
+ip access-list extended ACL_LAN-To-BRANCH-1
+ permit ip any 10.10.0.0 0.0.255.255
+ permit ip any 172.16.10.0 0.0.0.255
+ permit ip any 192.168.8.0 0.0.7.255
+ permit ip any 192.168.16.0 0.0.3.255
+ip access-list extended ACL_LAN-To-BRANCH-2
+ permit ip any 10.20.0.0 0.0.255.255
+ permit ip any 172.16.20.0 0.0.0.255
+ permit ip any 192.168.20.0 0.0.3.255
+ permit ip any 192.168.24.0 0.0.3.255
+!         
+route-map PBR_LAN-To-BRANCH permit 10
+ match ip address ACL_LAN-To-BRANCH-1
+ set ip next-hop 82.82.82.1 82.82.82.2
+!         
+route-map PBR_LAN-To-BRANCH permit 20
+ match ip address ACL_LAN-To-BRANCH-2
+ set ip next-hop 82.82.82.2 82.82.82.1
+
+interface GigabitEthernet3/0
+ ip policy route-map PBR_LAN-To-BRANCH
+=====================================================

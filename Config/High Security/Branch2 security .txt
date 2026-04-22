@@ -1,0 +1,245 @@
+BPDU Guard vs. Root Guard placement: Never apply BPDU Guard to legitimate switch-to-switch trunk links — BPDUs are expected and required on those links. Use Root Guard on trunk ports toward downstream switches and BPDU Guard on access ports toward end devices. The Branch 2 security template correctly separates these: bpduguard is global-default (access ports), while guard root is explicitly applied to port-channels and trunk interfaces [other/Branch2 security .txt](other/Branch2 security .txt#L55-L56) [other/Branch2 security .txt](other/Branch2 security .txt#L101).
+
+====================================================
+====================================================
+🔴 1) CORE SWITCH TEMPLATE (CSW1 / CSW2
+==============================================
+! ===============================
+! L3 INTERFACES (already ok)
+! ===============================
+
+! ===============================
+! CONTROL PLANE PROTECTION (CoPP Lite)
+! ===============================
+ip access-list extended CONTROL-PLANE-ACL
+ permit udp any any eq snmp
+ permit tcp any any eq ssh
+ permit eigrp any any
+ permit ospf any any
+
+class-map match-all CONTROL-PLANE-HOST
+ match access-group name CONTROL-PLANE-ACL
+!
+policy-map CONTROL-PLANE-POLICY
+ class CONTROL-PLANE-HOST
+  police cir 8000 bc 2000 conform-action transmit exceed-action drop
+!
+
+control-plane
+ service-policy input CONTROL-PLANE-POLICY
+!
+! ===============================
+! ROUTING SECURITY
+! ===============================
+router eigrp 100
+ passive-interface default
+ no passive-interface <uplinks>
+
+router ospf 1
+ passive-interface default
+ no passive-interface <uplinks>
+
+! ===============================
+! INTERFACE HARDENING
+! ===============================
+interface range e0/0 - 1/1
+ no cdp enable
+ ip verify unicast source reachable-via rx
+
+
+
+====================================================
+====================================================
+
+# 🔴 2) DISTRIBUTION SWITCH TEMPLATE (DSW1 / DSW2)
+====================================================
+## 🟢  Global Security
+no ip http server
+no ip http secure-server
+
+service password-encryption
+
+login block-for 120 attempts 3 within 60
+
+!-- LOGGING & MONITORING ---!
+logging buffered 64000 debugging
+logging trap warnings
+
+!--- STP GLOBAL HARDENING ---!
+spanning-tree mode mst
+spanning-tree loopguard default
+spanning-tree portfast default
+spanning-tree portfast bpduguard default
+
+!---- ERRDISABLE RECOVERY -----!
+errdisable recovery cause bpduguard
+errdisable recovery cause udld
+errdisable recovery cause psecure-violation
+errdisable recovery cause dhcp-rate-limit
+errdisable recovery interval 900
+
+!---- UDLD ---!
+udld enable
+udld aggressive
+
+!---- VLAN SECURITY ---!
+vlan 999
+ name BLACKHOLE
+vlan dot1q tag native
+
+## 🟢 DHCP + ARP Protection
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,50,60
+no ip dhcp snooping information option
+
+ip arp inspection vlan 10,20,30,40,50,60
+ip arp inspection validate src-mac dst-mac ip
+
+## 🟢 VLAN Interfaces Protection
+interface range Vlan10-60
+
+## 🟢 HSRP HARDENING
+interface Vlan10
+ standby 10 authentication md5 key-chain az
+ standby 10 100
+ standby 10 track g0/3 60
+
+interface Vlan20
+ standby 20 track g0/0 20
+
+## 🟢 TRUNK HARDENING
+interface g0/2
+ description TRUNK
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+ spanning-tree guard root
+ spanning-tree guard loop
+
+ udld port aggressive
+
+## 🟢 PORT-CHANNEL HARDENING
+interface range e1/0-3, e2/0-1 ,port-channel 1 - 3
+ switchport trunk native vlan 999
+ spanning-tree guard root
+ udld port aggressive
+ switchport nonegotiate
+
+
+! ip dhcp snooping trust
+! ip arp inspection trust
+
+
+
+!no cdp enable
+
+
+====================================================
+====================================================
+
+
+# 🔴 3) ACCESS SWITCH TEMPLATE (ASW1 / ASW2 / ASW3)
+## 🟢  Global Security
+no cdp run
+no ip http server
+no ip http secure-server
+service password-encryption
+login block-for 120 attempts 3 within 60
+
+!-- LOGGING & MONITORING ---!
+logging buffered 64000 debugging
+logging trap warnings
+
+!--- STP GLOBAL HARDENING ---!
+spanning-tree loopguard default
+spanning-tree portfast default
+spanning-tree portfast bpduguard default
+
+!---- ERRDISABLE RECOVERY -----!
+errdisable recovery cause bpduguard
+errdisable recovery cause udld
+errdisable recovery cause psecure-violation
+errdisable recovery cause dhcp-rate-limit
+errdisable recovery interval 300
+
+!---- UDLD ---!
+udld enable
+udld aggressive
+
+!---- VLAN SECURITY ---!
+vlan 999
+ name BLACKHOLE
+vlan dot1q tag native
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,50,60
+ip arp inspection vlan 10,20,30,40,50,60
+
+
+## 🟢 ACCESS PORT SECURITY
+interface range e0/0 - 3 ,e2/0-3
+ switchport mode access
+ switchport nonegotiate
+ no cdp enable
+
+ ! VLAN assignment 
+ switchport access vlan 10
+
+ ! Port Security
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+
+switchport port-security aging time 2
+switchport port-security aging type inactivity
+
+ ! DHCP Protection
+ ip dhcp snooping limit rate 10
+
+ ! IP Source Guard
+ ip verify source
+
+ ! STP Protection
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+ ! Storm Control
+ storm-control broadcast level 10.00 5.00
+ storm-control multicast level 10.00 5.00
+ no shutdown
+
+
+
+## 🟢 UPLINK PORTS 
+interface range e1/0 - 3, port-channel 1 - 2
+ description Uplink to DSW
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ spanning-tree guard root
+ spanning-tree guard loop
+
+
+
+## 🟢 UNUSED PORTS
+interface range e4/0-3
+ shutdown
+ switchport mode access
+ switchport access vlan 999
+ switchport protected
+
+## 🟢 منع VLAN Hopping
+vlan dot1q tag native
+
+
+
+
+====================================================
+====================================================

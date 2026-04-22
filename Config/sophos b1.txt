@@ -1,0 +1,410 @@
+PortA            Zonetype:LAN  
+                 IPv4 Addr(s): 192.168.60.1/24
+
+PortB            Zonetype:WAN  
+                 IPv4 Addr(s): 10.20.13.2/30
+PortC            Zonetype:WAN  
+                 IPv4 Addr(s): 10.20.23.2/30
+
+PortD            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.35.1/30
+PortE            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.36.1/30
+
+PortF            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.34.1/30
+
+!
+interface PortA
+!
+interface PortB
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+interface PortC
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+interface PortD
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+interface PortE
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+interface PortF
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+router ospf
+ ospf router-id 172.16.20.3
+ redistribute connected
+ network 10.20.13.0/30 area 0.0.0.2
+ network 10.20.23.0/30 area 0.0.0.2
+ network 10.20.35.0/30 area 0.0.0.2
+ network 10.20.36.0/30 area 0.0.0.2
+ network 10.20.34.0/30 area 0.0.0.2
+ network 192.168.50.0/24 area 0.0.0.2
+ area 0.0.0.2 authentication
+
+===============================================================
+
+PortA            Zonetype:LAN  
+                 IPv4 Addr(s): 192.168.20.2/24
+
+PortB            Zonetype:WAN  
+                 IPv4 Addr(s): 10.20.24.2/30
+PortC            Zonetype:WAN  
+                 IPv4 Addr(s): 10.20.14.2/30
+
+PortD            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.45.1/30
+PortE            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.46.1/30
+
+PortF            Zonetype:LAN  
+                 IPv4 Addr(s): 10.20.34.2/30
+
+!
+interface PortA
+!
+interface PortB
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+interface PortC
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf priority 0
+!
+interface PortD
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+interface PortE
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+interface PortF
+ ip ospf network point-to-point
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+!
+router ospf
+ ospf router-id 172.16.20.4
+ redistribute connected
+ network 10.20.14.0/30 area 0.0.0.2
+ network 10.20.24.0/30 area 0.0.0.2
+ network 10.20.45.0/30 area 0.0.0.2
+ network 10.20.46.0/30 area 0.0.0.2
+ network 10.20.34.0/30 area 0.0.0.2
+ network 192.168.20.0/24 area 0.0.0.2
+ area 0.0.0.2 authentication
+
+
+
+
+
+
+
+
+===========================================================
+console> show network interfaces
+GuestAP          Zonetype:UNBOUND MAC Address:F2:66:D6:F4:D7:6D  MTU:1500 
+                 IPv4 Addr(s): 10.255.0.1/24 Bcast:10.255.0.255 
+                 UP BROADCAST MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortA            Zonetype:LAN  MAC Address:0C:2F:34:AC:00:00  MTU:1500 
+                 IPv4 Addr(s): 192.168.60.1/24 Bcast:192.168.60.255 
+                 IPv6 Addr(s): fe80::e2f:34ff:feac:0/64 (link-local)
+                 Speed:-1Mb/s Full Duplex  
+                 UP BROADCAST RUNNING MULTICAST 
+                 RX State: packets:3818 bytes:271742 (265.3 KiB)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:5601 bytes:7515015 (7.1 MiB)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortB            Zonetype:WAN  MAC Address:0C:2F:34:AC:00:01  MTU:1500 
+                 IPv6 Addr(s): fe80::e2f:34ff:feac:1/64 (link-local)
+                 Speed:-1Mb/s Full Duplex  
+                 UP BROADCAST RUNNING MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:722 bytes:129256 (126.2 KiB)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortC            Zonetype:LAN  MAC Address:0C:2F:34:AC:00:02  MTU:1500 
+                 IPv4 Addr(s): 192.168.6.2/30 Bcast:192.168.6.3 
+                 IPv6 Addr(s): fe80::e2f:34ff:feac:2/64 (link-local)
+                 Speed:-1Mb/s Full Duplex  
+                 UP BROADCAST RUNNING MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:318 bytes:29980 (29.2 KiB)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortD            Zonetype:LAN  MAC Address:0C:2F:34:AC:00:03  MTU:1500 
+                 IPv4 Addr(s): 18.0.0.1/30 Bcast:18.0.0.3 
+                 IPv6 Addr(s): fe80::e2f:34ff:feac:3/64 (link-local)
+                 Speed:-1Mb/s Full Duplex  
+                 UP BROADCAST RUNNING MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:3222 bytes:152000 (148.4 KiB)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortE            Zonetype:LAN  MAC Address:0C:2F:34:AC:00:04  MTU:1500 
+                 IPv4 Addr(s): 192.168.5.2/30 Bcast:192.168.5.3 
+                 IPv6 Addr(s): fe80::e2f:34ff:feac:4/64 (link-local)
+                 Speed:-1Mb/s Full Duplex  
+                 UP BROADCAST RUNNING MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:318 bytes:29980 (29.2 KiB)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+PortF            Zonetype:UNBOUND MAC Address:0C:2F:34:AC:00:05  MTU:1500 
+                 Speed:-1Mb/s Full Duplex  
+                 BROADCAST MULTICAST 
+                 RX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 frame:0 
+                 TX State: packets:0 bytes:0 (0.0 B)
+                           errors:0 dropped:0 overruns:0 carrier:0 
+
+
+==============================
+console> show network static-route
+
+Destination/Netmask             Gateway         Metric    Interface
+===================================================================
+
+0.0.0.0/0.0.0.0                 18.0.0.2        0         PortD   
+
+
+
+=================================
+console> show advanced-firewall 
+        Strict Policy                           : on
+        FtpBounce Prevention                    : control
+        Tcp Conn. Establishment Idle Timeout    : 10800
+        UDP Timeout                             : 30
+        UDP Timeout Stream                      : 60
+        Fragmented Traffic Policy               : allow
+        Midstream Connection Pickup             : off
+        TCP Seq Checking                        : on
+        TCP Window Scaling                      : on
+        TCP Appropriate Byte Count              : off
+        TCP Selective Acknowledgements          : on
+        TCP Forward RTO-Recovery[F-RTO]         : off
+        TCP TIMESTAMPS                          : off
+        Strict ICMP Tracking                    : off
+        ICMP Error Message                      : allow
+        Caching for route lookups               : on
+        IPv6 Unknown Extension Header           : deny
+ 
+ 
+        Bypass Stateful Firewall
+        ------------------------
+         Source              Genmask             Destination         Genmask
+ 
+ 
+        NAT policy for system originated traffic
+        ---------------------
+        Destination Network     Destination Netmask     Interface       SNAT IP
+
+
+
+
+=======================================================
+=======================================================
+SF01V_KV01_SFOS 19.0.1 MR-1-Build365# ip route
+default via 18.0.0.2 dev PortD proto zebra 
+10.255.0.0/24 dev GuestAP proto kernel scope link src 10.255.0.1 linkdown 
+18.0.0.0/30 dev PortD proto kernel scope link src 18.0.0.1 
+192.168.5.0/30 dev PortE proto kernel scope link src 192.168.5.2 
+192.168.6.0/30 dev PortC proto kernel scope link src 192.168.6.2 
+192.168.60.0/24 dev PortA proto kernel scope link src 192.168.60.1 
+
+======================================================
+SF01V_KV01_SFOS 19.0.1 MR-1-Build365# iptables -L -n -v
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ALLOW_ALL             all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 HA_TRAFFIC            all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+  555 40103 LOGIN_SECURITY        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+  555 40103 ADMIN_SERVICES_ALLOW  all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        RULEID match  --fwruleid 0 
+    0     0 ADMIN_SERVICES_ALLOW  all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ust flags 9
+  555 40103 DROP_TEMPLATE         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+  535 39087 hotspot_filter_in     all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        MZONECT match  !  --srczone 2,4,5,6
+    0     0 ha_lbs_in             all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 thin_client           all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 DRPROXIES_IN          all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        MMFLAGS match  --mmflags 134217728 
+  555 40103 local_acls            all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        RULEID match  --fwruleid 0 
+    0     0 local_acls            all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  --proxy-flags 2 
+    0     0 deny_unauth_in        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 default_allow         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        RULEID match  !  --fwruleid 0  ENTITY MATCH  !  --proxy-flags 2 
+    0     0 vpn_filter_in         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 red_filter_in         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 hb_filter_in          all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 spx_filter_in         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+    0     0 dhcp_tunnel_filter_in  all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+    0     0 local_acls_logging    all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 all_drop_fwd          all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+    0     0 WPRADIUS_FWD          all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 FWD_INTERFACE         all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 deny_unauth_fwd       all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 MULTIPORT_BRIDGE      all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 FWSET                 all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        --set fwrules dst 
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 HA_OUT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+    0     0 deny_unauth_out       all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry           CTFLAGS match  --ctflags 512 
+13812  849K all_drop_out          all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+    0     0 frchains_filter_out   all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  --ctflags 1  !  --fwruleid 0 
+    0     0 frchains_filter_out   all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        MMFLAGS match  --mmflags 67108864 
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        CTFLAGS match  --ctflags 512 LOGDROP nlgroup 1 prefix `0110021' action `1' 
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  --ctflags 1  !  --fwruleid 0 LOGDROP nlgroup 1 prefix `0110021' action `1' 
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  --ctflags 134217728  --fwruleid 0 LOGDROP nlgroup 1 prefix `0110021' action `1' 
+
+Chain ADMIN_DEFAULT_DROP (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain ADMIN_SERVICES_ALLOW (2 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ADMIN_DEFAULT_DROP    all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_entry          
+
+Chain ALLOW_ALL (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain DROP_TEMPLATE (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 local_acls_logging    tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           -                    nfgroup match  --nfgroup 2  tcp dpt:53
+
+Chain DRPROXIES_IN (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ENTITY                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY TARGET CTFLAGS 512 
+
+Chain FWD_INTERFACE (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain HA_OUT (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain HA_TRAFFIC (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain LOGIN_SECURITY (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+  555 40103 login_security        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        RULEID match  --fwruleid 0 
+    0     0 login_security        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  --proxy-flags 2 
+    0     0 login_security_waf    all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        SCANFLAGS match  --scanflags 128 
+
+Chain MULTIPORT_BRIDGE (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain WPRADIUS_FWD (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain all_drop_fwd (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+
+Chain all_drop_out (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+13812  849K ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+
+Chain default_allow (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 dproxy_verdict        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        MMFLAGS match  --mmflags 134217728 
+    0     0 dproxy_verdict        all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        CTFLAGS match  --ctflags 512  STATUS match ! DNAT 
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        SCANFLAGS match  --scanflags 128 
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       localserviceset --sid 50 --pktport 
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        STATUS match DNAT localserviceset --sid 49 --pktport 
+
+Chain deny_unauth_fwd (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain deny_unauth_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain deny_unauth_out (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain dhcp_tunnel_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       localserviceset --sid 55 
+
+Chain dproxy_verdict (2 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 local_acls            all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+    0     0 local_acls_logging    all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       
+
+Chain frchains_filter_out (2 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 FWSET                 all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        --set fwrules dst 
+
+Chain ha_lbs_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain hb_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain hotspot_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        ENTITY MATCH  !  --hotspotid 0 localserviceset --sid 41 --pktport 
+
+Chain local_acls (3 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        nfgroup match  --nfgroup 5 localserviceset --sid 69 
+  555 40103 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        nfgroup match  --nfgroup 1 localserviceset --sid 61 
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        nfgroup match  --nfgroup 7 localserviceset --sid 73 
+    0     0 ACCEPT                all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        nfgroup match  --nfgroup 2 localserviceset --sid 63 
+
+Chain local_acls_logging (3 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       LOGDROP nlgroup 1 prefix `0103021' 
+
+Chain login_security (2 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+  555 40103 TRIGGERSLOWPATH       all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       localserviceset --sid 46 
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match       localserviceset --sid 46  --match-set deny_admin src LOGDROP nlgroup 1 prefix `0110021' 
+
+Chain login_security_waf (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 LOGDROP               all  --  *      *       0.0.0.0/0            0.0.0.0/0           skip_ip_match        SCANFLAGS match  --scanflags 128  --match-set deny_admin src LOGDROP nlgroup 1 prefix `0110021' 
+
+Chain red_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain spx_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+    0     0 ACCEPT                tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           -                    tcp dpt:8094
+
+Chain thin_client (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+
+Chain vpn_filter_in (1 references)
+ pkts bytes target                prot opt in     out     source               destination          optimization        
+SF01V_KV01_SFOS 19.0.1 MR-1-Build365# 

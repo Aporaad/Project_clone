@@ -1,0 +1,115 @@
+==================================================
+!-------- DC-DSW1 ----------!
+interface Ethernet0/3
+ description Link to DC-DSW1 e0/3 for routing
+ ip ospf cost 20
+interface e1/0
+ description TO DC-FPA1
+ ip ospf cost 1
+
+interface e1/1
+ description TO DC-FPA2
+ ip ospf cost 2
+==================================================
+!-------- DC-DSW2 ----------!
+interface Ethernet0/3
+ description Link to DC-DSW1 e0/3 for routing
+ ip ospf cost 20
+interface e1/0
+ description TO DC-FPA1
+ ip ospf cost 1
+interface e1/1
+ description TO DC-FPA2
+ ip ospf cost 2
+======================================================
+!-------- DC-PA1 ----------!
+interface E1/4
+ description Link to DC-DSW1
+ ip ospf cost 1
+interface E1/3
+ description Link to DC-DSW2
+ ip ospf cost 2
+
+interface E1/5
+ description Link to DC-CSW1
+ ip ospf cost 1
+interface E1/6
+ description Link to DC-DSW1
+ ip ospf cost 2
+======================================================
+!-------- DC-PA2 ----------!
+interface E1/4
+ description Link to DC-DSW1
+ ip ospf cost 1
+interface E1/3
+ description Link to DC-DSW2
+ ip ospf cost 2
+
+interface E1/5
+ description Link to DC-CSW1
+ ip ospf cost 1
+interface E1/6
+ description Link to DC-DSW1
+ ip ospf cost 2
+==================================================
+!-------- DC-CSW1 ----------!
+interface Ethernet0/2
+ description Link to DC-CSW2 
+ ip ospf cost 20
+interface e1/0
+ description TO DC-FPA1
+ ip ospf cost 1
+interface e1/1
+ description TO DC-FPA2
+ ip ospf cost 2
+
+interface e0/0
+ description TO DC-RE1
+ ip ospf cost 1
+interface e1/1
+ description TO DC-RE2
+ ip ospf cost 2
+==================================================
+!-------- DC-CSW2 ----------!
+interface Ethernet0/2
+ description Link to DC-CSW2 
+ ip ospf cost 20
+interface e1/0
+ description TO DC-FPA1
+ ip ospf cost 1
+interface e1/1
+ description TO DC-FPA2
+ ip ospf cost 2
+
+interface e0/0
+ description TO DC-RE1
+ ip ospf cost 1
+interface e1/1
+ description TO DC-RE2
+ ip ospf cost 2
+==================================================
+==================================================
+!-------- DC-RE1 ----------!
+interface g2/0
+ description Link to DC-RE2 
+ ip ospf cost 2
+
+interface G0/0
+ description TO DC-CSW1
+ ip ospf cost 1
+interface G1/0
+ description TO DC-CSW2
+ ip ospf cost 2
+==================================================
+!-------- DC-RE2 ----------!
+interface g2/0
+ description Link to DC-RE1 
+ ip ospf cost 2
+
+interface G0/0
+ description TO DC-CSW1
+ ip ospf cost 1
+interface G1/0
+ description TO DC-CSW2
+ ip ospf cost 2
+==================================================

@@ -1,0 +1,52 @@
+IP SLA (Service-Level Agreement)
+================================
+ip sla 1
+ icmp-echo 8.8.8.8 source-interface GigabitEthernet0/0
+ frequency 5	
+!#-  frequency by default =60
+
+ip sla schedule 1 life forever start-time now
+
+! or its default =1 hours 
+ip sla schedule 1 start-time now
+
+
+track 1 ip sla 1 reachability
+
+ip route 0.0.0.0 0.0.0.0 Serial4/1 track 1
+
+
+
+==============================================
+R1(config)# ip sla 11
+R1(config-ip-sla)# icmp-echo 10.1.3.3
+R1(config-ip-sla-echo)# frequency 10
+R1(config-ip-sla-echo)# exit
+R1(config)# ip sla schedule 11 life forever start-time now 
+R1(config)# track 1 ip sla 11 reachability
+R1(config-track)# delay down 10 up 1
+R1(config-track)# exit
+R1(config)# ip route 0.0.0.0 0.0.0.0 10.1.1.1 2 track 1
+
+
+R1(config)# ip sla 22
+R1(config-ip-sla)# icmp-echo 172.16.3.3
+R1(config-ip-sla-echo)# frequency 10
+R1(config-ip-sla-echo)# exit
+R1(config)# ip sla schedule 22 life forever start-time now
+R1(config)# track 2 ip sla 22 reachability
+R1(config-track)# delay down 10 up 1
+R1(config-track)# exit
+R1(config)# ip route 0.0.0.0 0.0.0.0 172.16.1.1 3 track 2
+=======================================
+standby 10 track 2 
+standby 10 track 2 decrement 60
+standby 20 priority 90
+
+
+==========================================
+show ip sla configuration 
+show ip sla statistics 
+
+===========================================================
+===========================================================

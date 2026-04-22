@@ -1,0 +1,204 @@
+! =الاحتياط
+================================================
+Branch-NETS list
+	10.10.0.0/16 
+	10.20.0.0/16 
+	172.16.10.0/24
+	172.16.20.0/24
+	192.168.00.0/16 
+================================================
+vlan 10-30 to Branch-NETS
+->B2-DS1 !B2-DS2 
+  -> B2-CSW1 !B2-CSW2 
+	-> B2-ASA ! B2-FG 
+	   -> B2-RE1 --> mpls(ISP1) !VPN(ISP2)
+	   !B2-RE2 ->mpls(ISP2) !VPN(ISP1)
+-------------------------------------------
+vlan 10-30 to internet
+->B2-DS1 !B2-DS2 
+  -> B2-CSW1 !B2-CSW2 
+	->B2-FG !B2-ASA 
+	   -> B2-RE2 --> ISP1 
+	   !B2-RE1 ->ISP2
+================================================
+vlan 40-60 to Branch-NETS
+->B2-DS2 !B2-DS1 
+  -> B2-CSW2 !B2-CSW1 
+	-> B2-ASA ! B2-FG 
+	   -> B2-RE1 --> mpls(ISP1) !VPN(ISP2)
+	   !B2-RE2 ->mpls(ISP2) !VPN(ISP1)
+--------------------
+vlan 40-50 to internet
+->B2-DS1 !B2-DS2 
+  -> B2-CSW1 !B2-CSW2 
+	->B2-FG !B2-ASA 
+	   -> B2-RE2 --> ISP1 
+	   !B2-RE1 ->ISP2
+================================================
+🎯 Branch Traffic Policy
+| VLAN  | Primary DS | Primary CSW    | Primary FW | Primary Router | WAN       |
+| ----- | ---------- | -------------- | -----------|----------------|-----------|
+| 10-30 | DS1        | CS1            | ASA        | RE1            | MPLS ISP1 |
+| 40-60 | DS2        | CS2            | ASA        | RE2            | MPLS ISP1 |
+---------------------------------------------------
+🌍 Internet Policy
+| VLAN  | Primary FW | Primary Router | WAN       |
+| ----- | -----------| -------------- |-----------|
+| 10-30 | FG         | RE2            | VPN ISP2  |
+| 40-50 | FG         | RE2            | VPN ISP2  |
+-----------------------------------------------------
+
+router bgp 100                                           
+ address-family ipv4 vrf HA                               
+   distance bgp 20 20 30
+
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  topology base
+  distance eigrp 90 250
+
+router ospf 1 vrf HA
+PE1(config-router)#dista
+PE1(config-router)#distance ?
+  <1-255>  Administrative distance
+  ospf     OSPF distance
+
+PE1(config-router)#distance os
+PE1(config-router)#distance ospf ?
+  external    External type 5 and type 7 routes
+  inter-area  Inter-area routes
+  intra-area  Intra-area routes
+
+PE1(config-router)#distance ospf e
+PE1(config-router)#distance ospf external ?
+  <1-255>  Distance for external type 5 and type 7 routes
+
+PE1(config-router)#distance ospf external 250
+
+
+
+
+
+
+
+
+
+
+============================================
+Layer 1 — Route Classification
+نقوم بتمييز الترافيك عبر:
+Route Tagging + Prefix Classification
+
+Layer 2 — Path Control
+باستخدام:
+PBR (Policy Based Routing)
++ IP SLA Tracking
+
+Layer 3 — WAN Engineering
+باستخدام:
+Floating Defaults
+Conditional Advertisement
+
+==========================
+----RE1+RE2
+ip prefix-list BRANCH-NETS seq 5 permit 10.10.0.0/16
+ip prefix-list BRANCH-NETS seq 10 permit 10.20.0.0/16
+ip prefix-list BRANCH-NETS seq 15 permit 172.16.10.0/24
+ip prefix-list BRANCH-NETS seq 20 permit 172.16.20.0/24
+ip prefix-list BRANCH-NETS seq 25 permit 192.168.0.0/16
+--------
+---RE1
+ip sla 1
+ icmp-echo 82.1.5.2 source-interface g3/0
+ frequency 3
+ip sla schedule 1 life forever start-time now
+
+track 1 ip sla 1 reachability
+ip route 0.0.0.0 0.0.0.0 82.1.5.2 track 1
+ip route 0.0.0.0 0.0.0.0 82.2.6.2 200
+
+
+
+----RE2
+ip sla 2
+ icmp-echo 82.2.6.2 source-interface g4/0
+ frequency 3
+ip sla schedule 2 life forever start-time now
+
+track 2 ip sla 2 reachability
+ip route 0.0.0.0 0.0.0.0 82.2.6.2 track 2
+ip route 0.0.0.0 0.0.0.0 82.1.5.2 200
+
+=======================================
+✅ STEP 4 — Traffic Engineering (CORE PART)
+--------
+#--VLAN10-30 Policy
+(يوضع على firewall-facing interface)
+---CSW1+CSW2
+ip access-list extended VLAN10_30
+ permit ip 10.10.0.0 0.0.255.255 any
+ permit ip 10.20.0.0 0.0.255.255 any
+
+route-map VLAN10-30-PBR permit 10
+ match ip address VLAN10_30
+ set ip next-hop 10.30.12.2
+
+interface g0/0
+ ip policy route-map VLAN10-30-PBR
+👉 يجبر الترافيك للمرور عبر RE1 → MPLS.
+--
+#--VLAN40-60 Policy	(عكسية)
+route-map VLAN40-60-PBR permit 10
+ match ip address VLAN40_60
+ set ip next-hop 10.30.12.1
+==============
+ip access-list extended VLAN10-30
+ permit ip 192.168.10.0 0.0.0.255 any
+ permit ip 192.168.20.0 0.0.0.255 any
+
+route-map TO-FG permit 10
+ match ip address VLAN10-30
+ set ip next-hop 172.16.1.2
+
+interface Vlan10
+ ip policy route-map TO-FG
+==================
+✅ STEP 5 — Branch vs Internet Separation
+Branch traffic لا يستخدم default route
+route-map BLOCK-INET permit 10
+ match ip address prefix-list BRANCH-NETS
+ set local-preference 200route-map BLOCK-INET permit 10
+ match ip address prefix-list BRANCH-NETS
+ set local-preference 200
+
+---CSW1
+
+---CSW1
+===================================
+---DSW1 -HSRP + IP SLA + Object Tracking
+ip sla 10
+ icmp-echo 10.255.255.1 source-interface Vlan10
+ frequency 1
+ip sla schedule 10 life forever start-time now
+
+track 10 ip sla 10 reachability
+
+interface Vlan10
+ standby 10 ip 192.168.10.1
+ standby 10 priority 120
+ standby 10 preempt delay minimum 30
+ standby 10 track 10 decrement 40
+---DS2
+standby 10 priority 100
+
+
+
+==============================
+BGP Local Preference Engineering
+---RE1
+route-map MPLS-IN permit 10
+ set local-preference 200
+
+---RE2
+route-map MPLS-IN permit 10
+ set local-preference 150

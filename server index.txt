@@ -1,0 +1,510 @@
+
+=============================================================================
+=============================================================================
+-----------------------------------
+Data Center (المقر الرئيسي)
+hahs.org
+عدد السيرفرات: 5
+
+Server		الدور
+PDC-SRV		Primary AD + DNS		192.168.100.10	16RAM/50GB
+ADC-SRV		Secondary AD + CA +DNS		192.168.100.20	8RAM/50GB
+
+NET-SRV		DHCP + RADIUS + WDS +		192.168.100.30	8RAM/50GB
+STG-SRV		File +DFS+Cluster + Backup	192.168.100.40	8RAM/50GB
+
+APP-SRV		Web + Mail			192.168.100.50	8RAM/50GB
+
+BR1-DC01	Read-Only DC + DNS + DHCP Backup + File Cache
+BR1-DC01	Read-Only DC + DNS + DHCP Backup + File Cache
+
+| Layer              | الوظيفة      		|
+| ------------------ | ------------- |
+| Identity Layer     | AD + DNS + CA |
+| Network Services   | DHCP + RADIUS |
+| Deployment         | WDS           |
+| Application Layer  | Web + Mail    |
+| Storage Layer      | File Services |
+| Availability Layer | Cluster       |
+
+
+SRV-DC01  → PDC Emulator + External NTP
+SRV-DC02  → Secondary DC
+SRV-NET01 → Domain Member
+SRV-APP01 → Domain Member
+SRV-STG01 → Domain Member
+-------------------------------------------------
+الفروع (Branch Offices)
+
+كل فرع يحتوي:
+
+Server	الدور
+BRx-DC01	Read-Only DC + DNS + DHCP Backup + File Cache
+الهدف:
+
+✅ استمرار العمل عند انقطاع WAN
+✅ Local Authentication
+✅ Local DNS Resolution
+✅ Sync تلقائي عند عودة الاتصال
+
+عند انقطاع الاتصال
+يحدث:
+✅ Login محلي
+✅ DNS يعمل
+✅ DHCP يعمل
+✅ الملفات المحلية متاحة
+=============================================================
+=============================================================
+--#  #---
+
+Forest Root
+Authentication Authority
+Time Source للشبكة
+Primary DNS
+Global Catalog
+------
+name:pdc
+IP: 192.168.100.10/24
+Gateway: 192.168.100.10
+DNS: 192.168.100.20 + 127.0.0.1
+
+
+AD DS
+Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
+
+تحقق:
+Get-WindowsFeature AD*
+-----
+إنشاء Forest
+Install-ADDSForest
+
+أدخل:
+Domain Name: hahs.org
+Forest Level: 2016
+DNS: Yes
+DSRM Password: Strong Password
+
+نقل قواعد FSMO (تأكيد)
+على DC01:
+netdom query fsmo
+
+OU Structure 
+hahs.org
+ └── hahs
+      ├── Admins
+      │    ├── Tier0
+      │    ├── Tier1
+      │    └── Tier2
+      │
+      ├── Servers
+      │    ├── DomainControllers
+      │    ├── Infrastructure
+      │    ├── Applications
+      │    └── Storage
+      │
+      ├── Computers
+      │    ├── HeadOffice
+      │    └── Branches
+      │
+      ├── Users
+      │    ├── Privileged 
+      │    ├── Users
+      │
+      ├── Groups
+      │    ├── Global
+      │    └── DomainLocal
+      │
+      └── Branches
+           ├── Branch1
+           └── Branch2
+---
+Forward Lookup Zone
+سيكون موجود تلقائياً:
+hahs.org
+
+تأكد:
+✅ AD Integrated
+✅ Secure Dynamic Updates
+
+إنشاء Reverse Lookup Zone
+DNS Manager → Reverse → New Zone:
+10.10.0.x
+
+الفائدة:
+Mail server
+Kerberos
+Monitoring
+
+
+
+netdom query fsmo
+
+w32tm /config /manualpeerlist:"time.windows.com,0x8 pool.ntp.org,0x8" /syncfromflags:manual /reliable:yes /update
+
+net stop w32time
+net start w32time
+
+w32tm /resync
+w32tm /query /status
+w32tm /query /source
+
+
+Time Sync Policy
+Computer Configuration
+ → Policies
+ → Administrative Templates
+ → System
+ → Windows Time Service
+
+Enable:
+Configure Windows NTP Client
+Type: NT5DS
+
+
+gpupdate /force
+=============================================================
+Secondary Domain Controller
+DNS Secondary
+Certificate Authority (Enterprise CA)
+------
+name:adc
+IP: 192.168.100.20/24
+Gateway: 192.168.100.100
+DNS: 192.168.100.10 +127.0.0.1
+
+-----
+Step 1 — Join Domain
+Add-Computer -DomainName hahs.org -Restart
+
+
+
+Step 2 — تثبيت AD Role
+Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
+
+Step 3 — Promote DC
+Install-ADDSDomainController
+اختر:
+Add DC to existing domain
+DNS Enabled
+Global Catalog = Yes
+
+Step 4 — تحقق Replication
+repadmin /replsummary
+
+يجب:
+
+Fails = 0
+--------------------------
+Enterprise Root CA
+
+Step 1 — تثبيت AD CS
+Install-WindowsFeature ADCS-Cert-Authority -IncludeManagementTools
+
+Step 2 — Configure CA
+اختر:
+Enterprise Root CA
+RSA 4096
+SHA256
+Validity = 10 years
+
+Step 3 -إنشاء Templates
+Computer Auth
+User Auth
+Web Server
+RADIUS
+#Enable Auto Enrollment.
+
+Step 4 — Backup CA فوراً
+certutil -backup D:\CABackup
+=============================================================
+DHCP Server
+RADIUS (NPS Server)
+WDS Server
+------
+name:net
+IP: 192.168.100.30/24
+Gateway: 192.168.100.100
+DNS: 192.168.100.10 +192.168.100.20
+-------------------------------------
+DHCP Setup
+Install-WindowsFeature DHCP -IncludeManagementTools
+
+Authorize:
+Add-DhcpServerInDC
+
+إنشاء Scope:
+10.10.10.0/24
+10.10.20.0/24
+
+DHCP Failover
+مع BRANCH Servers
+-------------------
+RADIUS (NPS)
+Install-WindowsFeature NPAS
+NPS → Register Server in Active Directory
+ربطه مع:
+WiFi
+VPN
+Switch 802.1X
+
+
+أضف Network Devices (Switch/AP).
+-------------------
+WDS
+إضافة:
+Boot Image
+Install Image
+PXE Enabled.
+
+===========================================
+
+------
+name:app
+IP: 192.168.100.30/24
+Gateway: 192.168.100.100
+DNS: 192.168.100.10 +127.0.0.1
+
+Web Server (IIS)
+Mail Server
+-----------------------------
+#- IIS
+Install-WindowsFeature Web-Server -IncludeManagementTools
+
+Enable:
+HTTPS
+Certificate from CA
+
+--------------
+#- Mail Server
+متطلبات:
+MX Record
+Reverse DNS
+TLS Cert
+
+
+===========================================
+#- File Server
+Install-WindowsFeature FS-FileServer
+إنشاء Shares
+New-SmbShare -Name users -Path D:\Users
+
+إنشاء Shares:
+\\files\users
+\\files\departments
+\\files\projects
+
+AGDLP Model
+User → Global Group
+Global → Domain Local
+Domain Local → Permission
+
+استخدم:
+AGDLP Model
+(Account → Group → Domain Local → Permission)
+------
+#- Backup Server
+تثبيت Windows Server Backup
+Install-WindowsFeature Windows-Server-Backup
+
+Backup Server
+Install-WindowsFeature Windows-Server-Backup
+جدولة Backup
+wbadmin enable backup
+
+اختر:
+System State
+Bare Metal
+Files
+
+قاعدة 3-2-1
+النسخ	الموقع
+Primary	Server
+Secondary	NAS
+Third	Offline/External
+---------
+سياسة Backup
+Type	Schedule
+System State	Daily
+File Server	Hourly
+DC Backup	Daily
+CA Backup	Daily
+Mail	Every 4h
+=============================================================
+=============================================================
+
+
+-Join Domain
+Add-Computer hahs.org
+-Install RODC
+Install-ADDSDomainController -ReadOnlyReplica
+
+Credential Cache
+في AD:
+Password Replication Policy
+اسمح فقط:
+Branch Users
+
+DHCP محلي
+Scope:
+10.20.0.0/24
+
+-----
+RODC؟
+آمن للفروع
+Cache Credentials
+لا يسمح بتعديل AD
+DNS
+Replica Integrated DNS.
+DHCP محلي
+Scope خاص بالفرع.
+Credential Caching Policy
+حدد المستخدمين المسموح حفظ بياناتهم محلياً.
+
+
+المزامنة بين الفروع والمركز
+AD Replication
+تلقائي عبر:
+Sites and Services
+
+أنشئ:
+Site-DC
+Site-Branch1
+Site-Branch2
+
+حدد WAN Links.
+
+DFS Replication (مهم جداً)
+لمزامنة الملفات:
+DFS Namespace
+DFS Replication
+
+
+
+
+عند انقطاع الاتصال
+
+يحدث:
+
+✅ Login محلي
+✅ DNS يعمل
+✅ DHCP يعمل
+✅ الملفات المحلية متاحة
+=============================================================
+
+=============================================================
+=============================================================
+🔄 المرحلة 9 — Multi-Site Replication
+Sites and Services
+
+افتح:
+dssite.msc
+
+أنشئ:
+Site-DC
+Site-Branch1
+Site-Branch2
+
+اربط Subnets.
+
+ضبط Replication Interval
+WAN link:
+15 minutes
+DFS Replication
+Install-WindowsFeature FS-DFS-Namespace,FS-DFS-Replication
+
+أنشئ Namespace:
+\\hahs.org\files
+أضف Branch Servers كم replica.
+
+DFS Replication (مهم جداً)
+لمزامنة الملفات:
+DFS Namespace
+DFS Replication
+---------------------------
+🔐 المرحلة 10 — GPO Security Baseline
+افتح:
+gpmc.msc
+Password Policy
+Min Length = 12
+Lockout = 5 attempts
+Firewall Policy
+Inbound deny by default
+BitLocker
+Store keys in AD
+Disable USB
+Computer Config → Admin Templates → Removable Storage
+
+
+Admin Tier Model
+Tier	أجهزة
+T0	DC
+T1	Servers
+T2	Workstations
+
+Tier Structure
+🔴 Tier-0 (Identity Control)
+
+Domain Controllers
+
+AD CS
+
+ADFS
+
+لا يُسمح لأي جهاز User بالوصول.
+
+🟠 Tier-1 (Servers)
+
+Application Servers
+
+File Servers
+
+🟢 Tier-2 (Users)
+
+Workstations
+
+Laptops
+
+القاعدة الذهبية
+Credentials NEVER move upward.
+--------------------------------------------
+📊 المرحلة 11 — Monitoring
+Event Forwarding
+على DC:
+wecutil qc
+
+أضف Subscriptions.
+Performance Monitor
+راقب:
+CPU
+Disk Queue
+LDAP
+DNS Queries
+Backup Alerts
+
+Task Scheduler:
+Trigger عند Event ID فشل Backup.
+
+==================
+Checklist التشغيل النهائي
+Check	Status
+DC Replication	✅
+DNS Resolution	✅
+Branch Login Offline	✅
+Backup Restore Test	✅
+Certificate Issuing	✅
+DHCP Failover	✅
+
+
+
+
+النتيجة النهائية
+
+أصبحت البنية:
+
+Multi-Site Active Directory
+
+Disaster Resilient
+
+Branch Autonomous
+
+Enterprise Grade Infrastructure

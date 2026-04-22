@@ -1,0 +1,219 @@
+========================================================
+hostname DCAdmin-DSW1
+
+no ip cef
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+interface loopback 0
+ ip address 172.16.10.11  255.255.255.255
+ ip ospf 1 area 0
+
+vlan 200
+ name admin
+interface Vlan 200
+ ip address 192.168.120.101 255.255.255.0
+ no sh
+ vrrp 20 ip 192.168.120.100
+ vrrp 20 priority 150
+ vrrp 20 preempt
+ vrrp 20 authentication text p2x4p/*-
+
+!-------------interface ---------
+interface Ethernet0/0
+ description TO DC-FPA1
+ no sh 
+ no switchport
+ ip address 10.10.115.2 255.255.255.252
+ ip ospf 1 area 0
+!
+interface Ethernet0/1
+ description TO DC-FPA2
+ no sh
+ no switchport
+ ip address 10.10.116.2 255.255.255.252
+ ip ospf 1 area 0
+
+!-----Port-channel 1 L3 -------!
+interface port-channel1
+ description TO DC-Admin-DSW2 
+ no switchport
+ no shutdown
+interface range e0/2-3
+ description TO DC-admin-DSW2  with port-channel 1
+ no switchport
+ no shutdown
+ no ip address
+ channel-group 1 mode active
+interface port-channel1
+ ip address 10.10.112.1  255.255.255.252
+ no sh
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+!-----Port-channel 2 -------!
+interface range e3/0-1
+ description TO DC-admin-ASW2 with port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ description TO DC-admin-ASW1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+
+
+!----- OSPF -------!
+router ospf 1
+ router-id 172.16.10.11
+ network 192.168.120.0 0.0.0.255 area 0
+ passive-interface Ethernet 3/0
+ passive-interface Ethernet 3/1
+ passive-interface vlan 200
+
+
+
+========================================================
+hostname DCAdmin-DSW2
+
+no ip cef
+key chain az
+ key 1
+  key-string p2x4pD9R6Y++
+   cryptographic-algorithm md5
+
+interface loopback 0
+ ip address 172.16.10.12  255.255.255.255
+ ip ospf 1 area 0
+
+vlan 200
+ name admin
+interface Vlan 200
+ ip address 192.168.120.102 255.255.255.0
+ no sh
+ vrrp 20 ip 192.168.120.100
+ vrrp 20 priority 100
+ vrrp 20 authentication text p2x4p/*-
+
+!-------------interface ---------
+interface Ethernet1/0
+ description TO DC-FPA1
+ no sh 
+ no switchport
+ ip address 10.10.125.2 255.255.255.252
+ ip ospf 1 area 0
+!
+interface Ethernet1/1
+ description TO DC-FPA2
+ no sh
+ no switchport
+ ip address 10.10.126.2 255.255.255.252
+ ip ospf 1 area 0
+
+!-----Port-channel 1 L3 -------!
+interface port-channel1
+ description TO DC-admin-DSW1 
+ no switchport
+ no shutdown
+interface range e0/2-3
+ description TO DC-admin-DSW2  with port-channel 1
+ no switchport
+ no shutdown
+ no ip address
+ channel-group 1 mode active
+interface port-channel1
+ ip address 10.10.112.2  255.255.255.252
+ no sh
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+
+!-----Port-channel 2 -------!
+interface range e0/0-1
+ description TO DC-admin-ASW1 with port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ description TO DC-admin-ASW1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 2 mode active
+
+
+
+!----- OSPF -------!
+router ospf 1
+ router-id 172.16.10.12
+ network 192.168.120.0 0.0.0.255 area 0
+ passive-interface Ethernet 0/0
+ passive-interface Ethernet 0/1
+ passive-interface vlan 200
+
+
+
+
+===========================================================
+hostname DC-Admin-ASW
+vlan 200
+ name admin
+
+interface range e0/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface port-channel 1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface range e0/0-1
+ channel-group 1 mode active
+
+interface range e3/0-1
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface port-channel 2
+ switchport
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ switchport nonegotiate
+ no shutdown
+interface range e3/0-1
+ channel-group 2 mode active
+
+interface e1/0
+ no sh
+ switchport mode access 
+ switchport access vlan 200
+

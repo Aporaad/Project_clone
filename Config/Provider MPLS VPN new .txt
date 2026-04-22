@@ -1,0 +1,321 @@
+1-2 ,5-6 ,9-10,13-14,17-18,21-22,25-26
+ Multi-Protocol CE routing داخل نفس VPN.
+مطابق تماماً لـ RFC 4364 MPLS L3VPN Model.
+MPLS Label Range مختلف لكل PE
+
+
+توحيد التسمية والوصف (Standardized Naming and Descriptions): استخدام وصف (Description) دقيق وموحد لجميع الواجهات والروابط يسهل عملية استكشاف الأخطاء وإصلاحها (Troubleshooting) وإدارة الشبكة. يجب أن يعكس الوصف بوضوح الغرض من الواجهة والاتصال الذي تمثله.
+
+BGP Peer Groups
+
+
+ضبط MTU/MSS لأنفاق GRE/IPsec: في أنفاق GRE/IPsec، قد تحدث مشاكل تجزئة الحزم (Fragmentation) بسبب حجم الرأس الإضافي. يوصى بضبط ip tcp adjust-mss 1360  
+
+neighbor x.x.x.x next-hop-self (داخل vpnv4 أحياناً مطلوب)
+
+!
+passive-interface default
+
+عدم وجود LDP Sync مع OSPF
+mpls ldp sync
+على كل interface core
+---------
+bgp log-neighbor-changes
+neighbor x.x.x.x fall-over
+
+----------------
+PE1(config-if)# mpls ldp igp ?
+  autoconfig  Allow automatic configuration of LDP when the IGP is configured
+  sync        Allow LDP-IGP Synchronization on this interface
+=====================================
+! ---------- MP-BGP ----------
+neighbor x password
+neighbor x ttl-security hops 2
+neighbor x send-community extended 
+neighbor x send-community both
+bgp log-neighbor-changes
+
+
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls label protocol ldp
+mpls ldp router-id Loopback1 force
+
+
+router ospf 5
+ mpls ldp autoconfig
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+========================================
+hostname PE1
+int Loopback1
+ ip add 82.82.82.1 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:1
+ route-target both 100:1
+
+interface g0/0
+ description TO PE2
+ ip address 82.1.10.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g1/0
+ description TO PE3
+ ip address 82.1.20.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO DC-RE1
+ ip vrf forwarding HA
+ ip address 82.1.1.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+interface g4/0
+ description TO DC-RE2
+ ip vrf forwarding HA
+ ip address 82.1.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls ldp router-id Loopback1 force
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-OSPF permit 10
+ set tag 100
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+
+route-map OSPF-TO-BGP permit 20
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.2 remote-as 100 
+ neighbor 82.82.82.2 update-source Loopback1
+ neighbor 82.82.82.2 next-hop-self
+ neighbor 82.82.82.2 password P2X4Phahs
+ neighbor 82.82.82.2 ttl-security hops 2
+ neighbor 82.82.82.3 remote-as 100 
+ neighbor 82.82.82.3 update-source Loopback1
+ neighbor 82.82.82.3 next-hop-self
+ neighbor 82.82.82.3 password P2X4Phahs
+ neighbor 82.82.82.3 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.2 activate
+  neighbor 82.82.82.2 send-community both
+  neighbor 82.82.82.3 activate
+  neighbor 82.82.82.3 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.1
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.82.1
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+===============================================
+hostname PE2
+int Loopback1
+ ip add 82.82.82.2 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:2
+ route-target both 100:1
+
+interface g0/0
+ description TO PE1
+ ip address 82.1.10.2 255.255.255.252
+ no sh
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+
+interface g1/0
+ description TO PE3
+ ip address 82.1.30.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO B1-RE1
+ ip vrf forwarding HA
+ ip address 82.1.3.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+
+interface g4/0
+ description TO B1-RE2
+ ip vrf forwarding HA
+ ip address 82.1.4.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ no sh
+! ---------- MPLS ----------
+mpls label range 200 299
+mpls ldp router-id Loopback1 force
+
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-OSPF permit 10
+ set tag 100
+
+route-map OSPF-TO-BGP deny 10
+ match tag 100
+
+route-map OSPF-TO-BGP permit 20
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.1 remote-as 100 
+ neighbor 82.82.82.1 update-source Loopback1
+ neighbor 82.82.82.1 next-hop-self
+ neighbor 82.82.82.1 password P2X4Phahs
+ neighbor 82.82.82.1 ttl-security hops 2
+ neighbor 82.82.82.3 remote-as 100 
+ neighbor 82.82.82.3 update-source Loopback1
+ neighbor 82.82.82.3 next-hop-self
+ neighbor 82.82.82.3 password P2X4Phahs
+ neighbor 82.82.82.3 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.1 activate
+  neighbor 82.82.82.1 send-community both
+  neighbor 82.82.82.3 activate
+  neighbor 82.82.82.3 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute ospf 1 route-map OSPF-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.2
+! ---------- VRF OSPF ----------
+router ospf 1 vrf HA 
+  router-id 82.82.82.2
+ redistribute bgp 100 subnets route-map BGP-TO-OSPF
+
+
+===============================================
+hostname PE3
+int Loopback1
+ ip add 82.82.82.3 255.255.255.255
+ ip ospf 5 area 0
+
+ip vrf HA
+ rd 100:3
+ route-target both 100:1
+
+interface g0/0
+ description TO PE1
+ ip address 82.1.20.2 255.255.255.252
+ ip ospf network point-to-point
+ no sh
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+
+interface g1/0
+ description TO PE2
+ ip address 82.1.30.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 5 area 0
+ mpls ip
+ mpls ldp sync
+ no sh
+
+interface g3/0
+ description TO B2-RE1
+ ip vrf forwarding HA
+ ip address 82.1.5.2 255.255.255.252
+ no sh
+
+interface g4/0
+ description TO B2-RE2
+ ip vrf forwarding HA
+ ip address 82.1.6.2 255.255.255.252
+ no sh
+! ---------- MPLS ----------
+mpls label range 100 199
+mpls ldp router-id Loopback1 force
+
+! ---------- ROUTE TAGGING ----------
+route-map BGP-TO-EIGRP permit 10
+ set metric 10000 100 255 1 1500
+ set tag 100
+
+route-map EIGRP-TO-BGP deny 10
+ match tag 100
+
+route-map EIGRP-TO-BGP permit 20
+
+
+! ---------- MP-BGP ----------
+router bgp 100
+ neighbor 82.82.82.1 remote-as 100 
+ neighbor 82.82.82.1 update-source Loopback1
+ neighbor 82.82.82.1 next-hop-self
+ neighbor 82.82.82.1 password P2X4Phahs
+ neighbor 82.82.82.1 ttl-security hops 2
+ neighbor 82.82.82.2 remote-as 100 
+ neighbor 82.82.82.2 update-source Loopback1
+ neighbor 82.82.82.2 next-hop-self
+ neighbor 82.82.82.2 password P2X4Phahs
+ neighbor 82.82.82.2 ttl-security hops 2
+ no auto-summary
+
+ address-family vpnv4 unicast
+  neighbor 82.82.82.1 activate
+  neighbor 82.82.82.1 send-community both
+  neighbor 82.82.82.2 activate
+  neighbor 82.82.82.2 send-community both
+  exit
+
+ address-family ipv4 vrf HA
+  redistribute eigrp 100 route-map EIGRP-TO-BGP
+  exit
+! ---------- CORE OSPF ----------
+router ospf 5
+ router-id 82.82.82.3
+
+! ---------- EIGRP  ----------
+router eigrp HA
+ address-family ipv4 unicast vrf HA autonomous-system 100
+  network 82.1.5.0 0.0.0.3
+  topology base
+   redistribute bgp 100 route-map BGP-TO-EIGRP
+  exit-af-topolo
+ exit-address-family
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

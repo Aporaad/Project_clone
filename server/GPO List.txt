@@ -1,0 +1,312 @@
+dcgpofix /target:both
+dcgpofix /ignoreschema /target:domain
+gpupdate /force
+=================================================================================
+1-Remove Run menu from Start Menu
+2-Remove Properties from the Computer icon context menu
+3-Hide Desktop Icons using Registry
+4.Prevent changing desktop icons 
+
+
+4-Allows inbound file and printer sharing
+5-Desktop Wallpaper
+6-Run only specified application	@
+7-Prevent access to the commend prompt
+8-Restrict these programs from being launched from Help	@
+9-Restrict Removable Media Drives 	 
+10-Folder Redirection	@
+11-Software installation
+12-Message text for users attempting to log on
+13-Do not reguire CTRL + ALT + DEL
+14-Force logoff when logon expire
+15-Computer and Users Scripts	@
+
+
+12.Moderating Access to Control Panel
+13-Prevent access to registry editing tools
+
+
+14-Prevent Windows from Storing LAN Manager Hasha	@
+15-Disable NTLM version 1	@
+16-Disable Anonymous SID Enumeration Enum.exe	@
+
+17-Disable Forced System Restarts
+18-Restrict Software Installations Prohibit User Install	@
+19-Screen Lockout Time
+
+20-Disable Guest Account Accounts:
+21-Block Microsoft Accounts
+
+22-Set Minimum Password Length to Higher Limits
+23-Set Maximum PassWord Age to Lower Limits
+
+24-Windows Defender Firewall
+25-Microsoft Defender Antivirus :Turn on script scanning	@
+
+
+-Remove Clock from the system notification area	
+
+-Do not display the lock screen (CTRL + ALT + DEL)	@
+
+-Enable access-denied assistance on client for all file types	@
+ 
+-Software Restriction
+-Account Policies /Password Policy
+
+-Prohibit access to Control Panel and PC settings
+=================================================================================
+1-Remove Run menu from Start Menu
+User Configuration/Administrative Templates/
+	Start Menu and Taskbar/
+		Remove Run menu from Start Menu
+-----------------------------------------------------------------------------
+2-Remove Properties from the Computer icon context menu
+User Configuration/Administrative Templates/
+	Desktop/
+		Remove Properties from the Computer icon context menu
+-----------------------------------------------------------------------------
+3-Hide Desktop Icons frome Registry
+User Configuration -> Policies -> Preferences -> Windows Settings -> Registry /  new Registry properties->
+       HKEY_CURRENT_USER 
+      Computer\HKEY_LOCAL_ MACHINE\SOFTWARE\Microsoft \Windows\CurrentVersion \Explorer\HideDesktopIcons \NewStartPanel
+
+
+
+HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel
+SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel
+{20D04FE0-3AEA-1069-A2D8-08002B30309D}
+{5399E694-6CE5-4D6C-8FCE-1D8870FDCBA0}
+{59031a47-3f72-44a7-89c5-5595fe6b30ee}
+{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}
+
+-on user level 	
+#@#--not computers level @#@
+
+--------------------------
+4.Prevent changing desktop icons 
+User Configuration/Administrative Templates/
+	Control Panel/Personalization	 
+		Prevent changing desktop icons 
+
+--------------------------------------------------------------------------------------------------------------------
+5-Allows inbound file and printer sharing
+	Computer Configuration > Windows Settings > Security Settings -> Windows Firewall 
+-- or .
+	Computer Configuration > Administrative Templates > Network > Network Connections > Domain profile
+		Windows Firewall >\ "Allows inbound file and printer sharing"
+			allowed incoming messages from server:192.168.1.50
+--------------------------------------------------------------------------------------------------------------------
+6-Desktop Wallpaper
+User Configuration/Administrative Templates/
+	Start Menu and Taskbar/Desktop/Desktop/ 
+		Desktop Wallpaper 
+		"\\raad.com\shard\Wallpape.jpg"
+
+-add Wallpaper to shard folder (shar) in Server
+-----------------------------------------------------------------------------
+7-Run only specified application
+User Configuration/Administrative Templates/System/
+	Run only specified application
+		:chrome.exe
+-----------------------------------------------------------------------------
+8-Prevent access to the commend prompt
+	Computer Configuration/Administrative Templates/System/
+		Prevent access to the commend prompt : 
+			Disable .... :NO
+-----------------------------------------------------------------------------
+9-Restrict these programs from being launched from Help
+	Computer Configuration/Administrative Templates/System/
+		Restrict these programs from being launched from Help
+-----------------------------------------------------------------------------
+10-Restrict Removable Media Drives (USB ,DVDs, CDs, and Floppy)
+	User Configuration/Administrative Templates/ System/
+		Removable Storage Access/
+			All Removable Storage classes: Deny all access 
+-----------------------------------------------------------------------------
+11-Folder Redirection
+	User Configuration /Policies /Windows Settings/Folder Redirection
+		desktop ->Basic ... under the root path .. 
+			"\\raad.com\User Folder\"
+#-create folder sharing  "User Folder" and 
+#-allowed 'full control' for NTFS and Share permission ##
+-----------------------------------------------------------------------------
+12-Software installation 
+User Configuration /Software Settings /Assigned Applications
+	PuTTY release 0.81 (64-bit).msi
+
+#-.msi
+#-Published only in User Configuration 
+-Published يدوي
+-Assigned	تلقائي
+#-enable file and printer share
+-----------------------------------------------------------------------------
+13-Message text for users attempting to log on
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options\
+		Interactive logon: Message text for users attempting to log on
+		Interactive logon: Message title for users
+-----------------------------------------------------------------------------
+14-Do not reguire CTRL + ALT + DEL
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options\
+		Interactive logon: Do not reguire CTRL + ALT + DEL
+
+ #-Only Enterprice ,Education ,server SKUs
+
+ #-Run:Control userpass \\Require users to press CTRL + ALT + DEL
+
+#win10- run:CONTROL USERPASSWORDS2 >Advanced
+-----------------------------------------------------------------------------
+15-Force logoff when logon expire
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options 
+		Network Security: Force logoff when logon expire
+
+	Microsoft network server: Disconnect clients when logon hours expire
+##-To affect domain accounts this setting must be defined in the Default Domain Policy, ##
+-----------------------------------------------------------------------------
+16-Computer and Users Scripts
+	Computer Configuration /Policies /Windows Settings /Scripts /
+		Startup :\\server\SYSVOL\Scipts\script.bat
+		Shutdown :
+	User Configuration /Policies /Windows Settings /Scripts /
+		logon: \\server\SYSVOL\Scipts\script.bat
+		logoff
+
+#- Create script "script.bat" on \\server\SYSVOL\scipts\
+
+
+-----------------------------------------------------------------------------
+17.Moderating Access to Control Panel
+	User Configuration\Administrative Templates\Control Panel\
+		"Prohibit access to Control Panel and PC settings"
+
+#- Only User Configuration level
+-----------------------------------------------------------------------------
+18-Prevent access to registry editing tools
+	User Configuration > Administrative Templates > System
+		Prevent access to registry editing tools
+
+-----------------------------------------------------------------------------
+19-Prevent Windows from Storing LAN Manager Hasha (LM hash) and a Windows NT hash (NT hash) Mir
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options\
+		Network security: Do not store LAN Manager hash value on next password change". 
+-----------------------------------------------------------------------------
+20-Disable NTLM version 1
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options 
+		Network Security: LAN Manager authentication level
+-----------------------------------------------------------------------------
+21-Disable Anonymous SID Enumeration Enum.exe
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options
+	Network Access: Do not allow anonymous enumeration of accounts and shares" 
+-----------------------------------------------------------------------------
+22-Disable Forced System Restarts 
+	Computer Configuration > Administrative Templates ?Windows Component > Windows Update >
+		No auto-restart with logged on users for scheduled automatic updates installations
+-----------------------------------------------------------------------------
+23.Restrict Software Installations Prohibit User Install
+	Computer Configuration" "Administrative Templates" "Windows Component" "Windows Installer".
+		Prohibit User Install
+-----------------------------------------------------------------------------
+24-Account Policies» “Password Policy
+Set Minimum Password Length to Higher Limits
+	Computer Configuration" "Windows Settings» "Security Settings" "Account Policies» 
+	“Password Policy \ Minimum password length" 
+------------
+Set Maximum PassWord Age to Lower Limits
+
+
+-----------------------------------------------------------------------------
+25-Screen Lockout Time
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > SecurityOptions>
+		Interactive logon: Machine inactivity limit.
+-----------------------------------------------------------------------------
+26-Disable Guest Account Accounts
+	Computer Configuration" "Windows Settings" "Security Settings» Local Policies" "security Options".
+		Accounts: Guest Account Status
+
+#in windows xp
+-----------------------------------------------------------------------------
+27-Block Microsoft Accounts
+	Computer Configuration" "Windows Settings" "Security Settings» Local Policies" "security Options".
+		Accounts: Block Microsoft Accounts
+-----------------------------------------------------------------------------
+28-Rename Administrator account
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options\
+		Interactive logon: Rename Administrator account
+				 Administrator account status
+-----------------------------------------------------------------------------
+29-Windows Defender Firewall: Do not allow exceptions	//منع الاستثناء
+	Computer Configuration > Administrative Templates > Network > 
+		Network Connections > Windows Firewall > Domain Profile
+-----------------------------------------------------------------------------
+30-Microsoft Defender Antivirus :Turn on script scanning
+	Computer Configuration > Administrative Templates > Windows Components > 
+		Microsoft Defender Antivirus > Real-time Protection >Turn on script scanning
+-----------------------------------------------------------------------------
+31-Drive Maps
+	User Configuration\Preferences\ًwindows Settings \Driver Maps 
+-----------------------------------------------------------------------------
+#-Remove Clock from the system notification area	
+User Configuration/Administrative Templates/
+	Start Menu and Taskbar/
+Remove Clock from the system notification area	Enabled	No
+
+-----------------------------------------------------------------------------
+#-Do not display the lock screen (CTRL + ALT + DEL)	
+User Configuration\Administrative Templates\Control Panel\Personalization
+	Do not display the lock screen
+
+-----------------------------------------------------------------------------
+#-Enable access-denied assistance on client for all file types
+Setting Path:
+Computer Configuration/Administrative Templates/System/Access-Denied Assistance
+
+
+-----------------------------------------------------------------------------
+run > mmc >file> add snap in. “ Microsoft management console” >
+	Group policy objects >Advanced >select user
+------
+=================================================================================
+=================================================================================
+
+-----------------------------------------------------------------------------
+#-Software Restriction
+Computer Configuration /Policies /Windows Settings /Security Settings/
+	Software Restriction Policies
+	  Designated File Types
+	  Enforcement 
+	  Trusted Publishers
+	  Security Levels/
+	  Additional Rules/
+
+-----------------------------------------------------------------------------
+#-Account Policies /Password Policy
+Computer Configuration /Policies /Windows Settings /Security Settings/
+	Account Policies /Password Policy /
+
+=================================================================================
+=================================================================================
+#-Prohibit access to Control Panel and PC settings	
+User Configuration\Administrative Templates\Control Panel\
+	Prohibit access to Control Panel and PC settings
+
+	Disable\
+		Disable the Display Control Panel	
+		Hide Settings tab
+
+	Add or Remove Programs\	
+	Personalization\		
+	Printers\		
+	Programs\		
+	Regional and Language Options\		
+	Hide specified Control Panel items	
+	Always open All Control Panel Items when opening Control Panel	
+	Show only specified Control Panel items
+-----------------------------------------------------------------------------
+	Computer Configuration > Windows Settings > Security Settings > Local Policies > Security Options\
+		Interactive logon: Administrator account status
+		Interactive logon: Block Microsoft account 
+		Interactive logon: Rename Administrator account
+		Interactive logon: Rename gust account
+
+		Interactive logon: MACHINE ACCOUNT LOCKOUT THRESHOLD
+		Interactive logon: Machine inactivity limit 
+		Interactive logon: maximum machine account password age

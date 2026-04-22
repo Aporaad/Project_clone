@@ -1,0 +1,75 @@
+===================
+vlan dot1q tag native
+interface f0/1
+ ip arp inspection
+interface f0/1
+ip verify source port-security
+
+#-Bpdu Filter 
+int fa0/24 
+ spanning-tree bpdufilter disable 
+int fa0/24 
+S2(config-if)#spanning-tree bpdufilter enable  
+
+على وصلات Switch ↔ Switch
+❌ لا تستخدم:
+spanning-tree portfast edge trunk
+استخدم بدلاً منه:
+spanning-tree guard root
+spanning-tree link-type point-to-point
+-------
+Distribution ↔ Access
+interface Port-channel1
+ switchport mode trunk
+ spanning-tree guard root
+ spanning-tree link-type point-to-point
+
+Access ↔ End devices
+interface range g0/1-48
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+==========
+PortFast = Edge only
+Trunk = Never Edge (unless server virtualization)
+
+
+
+
+spanning-tree vlan 10,20,30 root primary
+
+
+
+Extra Protections Use separate Management VLAN Best practice
+Extra Protections Disable unused protocols (CDP, DTP, VTP) Best practice
+Extra Protections Enable Control Plane Policing (CoPP) Best practice
+Extra Protections Enable Syslog + SNMP traps Monitoring & alerts
+
+
+
+
+
+
+======================
+Failover أسرع من HSRP؟
+HSRP Active == STP Root
+========================
+!--DSW1 + DSW2 + جميع ASW
+spanning-tree mode mst
+
+spanning-tree mst configuration
+ name CAMPUS
+ revision 1
+
+ instance 1 vlan 10,20,50
+ instance 2 vlan 30,40,60
+end
+show spanning-tree mst configuration
+
+✅ STEP 2 — تعيين Root لكل Instance
+على B2-DSW1
+spanning-tree mst 1 priority 4096
+spanning-tree mst 2 priority 28672
+
+على B2-DSW2
+spanning-tree mst 1 priority 28672
+spanning-tree mst 2 priority 4096

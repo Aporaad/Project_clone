@@ -1,0 +1,548 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=======================================================
+configure terminal
+hostname DC-RE1
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.1 255.255.255.255
+ ip ospf 1 area 1
+!
+interface GigabitEthernet0/0
+ description Link to DC-Core1
+ ip address 10.10.13.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+
+!
+interface GigabitEthernet1/0
+ description Link to DC-Core2 (Redundant)
+ ip address 10.10.14.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+!
+interface g2/0
+ description Link to DC-RE2
+ ip address 10.10.12.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for mpls
+ ip address 82.1.1.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ duplex full
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 G0/0 for vpn
+ ip address 82.2.1.1 255.255.255.252
+ no shutdown
+!
+
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.10.1
+ network 10.10.0.0 0.0.255.255 area 1
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.1.2
+
+! ---------- NAT  ----------
+access-list 10 permit  10.10.0.0  0.0.255.255
+access-list 10 permit  172.16.10.0 0.0.0.255
+ip nat inside source list 10 interface g4/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int g4/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.10.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.2.4.1
+crypto isakmp key P2X4Phahs address 82.2.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.20.1 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g4/0
+ tunnel mode gre multipoint 
+ ip nhrp network-id 123
+ ip nhrp map multicast dynamic 
+ ip nhrp authentication P2X4Phahs
+ ip nhrp redirect
+ tunnel protection ipsec profile proaz
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+=======================================================
+configure terminal
+hostname DC-RE2
+!
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.2 255.255.255.255
+ ip virtual-reassembly in
+ ip ospf 1 area 1
+!
+interface GigabitEthernet0/0
+ description Link to DC-Core1
+ ip address 10.10.23.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface GigabitEthernet1/0
+ description Link to DC-Core2 
+ ip address 10.10.24.1 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+!
+interface g2/0
+ description Link to DC-RE1 
+ ip address 10.10.12.2 255.255.255.252
+ no shutdown
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 p2x4pD9R6Y++
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip nat inside
+ ip virtual-reassembly in
+ duplex full
+
+interface GigabitEthernet3/0
+ description Link to ISP 1 for vpn
+ ip address 82.1.2.1 255.255.255.252
+ no shutdown
+ ip virtual-reassembly in
+ duplex full
+ ip nat outside
+!
+interface GigabitEthernet4/0
+ description Link to ISP 2 for mpls
+ ip address 82.2.2.1 255.255.255.252
+ no shutdown
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip virtual-reassembly in
+ duplex full
+!
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.10.2
+ network 10.10.0.0 0.0.255.255 area 1
+ exit
+ip route 0.0.0.0 0.0.0.0 82.1.2.4
+
+
+! ---------- NAT  ----------
+access-list 10 permit  10.10.0.0  0.0.255.255
+access-list 10 permit  172.16.10.0 0.0.0.255
+ip nat inside source list 10 interface g3/0 overload
+
+int range loopb0,g0/0,g1/0,g2/0
+ ip nat inside
+int  g3/0
+ ip nat outside
+
+
+! ---------- VPN Confige ----------
+access-list 100 permit ip 10.10.0.0 0.0.255.255 10.0.0.0 0.255.255.255
+crypto isakmp policy 10
+ encr aes 256
+ authentication pre-share
+ group 5
+ lifetime 80000
+crypto isakmp key P2X4Phahs address 82.1.4.1
+crypto isakmp key P2X4Phahs address 82.1.6.1
+crypto ipsec transform-set vpnaz esp-aes esp-sha-hmac
+ mode tunnel 
+crypto ipsec profile proaz
+ set transform-set vpnaz
+
+
+!------------ TUNNEL ------
+interface Tunnel1
+ ip address 10.10.10.1 255.255.255.248
+ no sh
+ no ip redirects
+ tunnel source g3/0
+ tunnel mode gre multipoint 
+ ip nhrp network-id 123
+ ip nhrp map multicast dynamic 
+ ip nhrp authentication P2X4Phahs
+ ip nhrp redirect
+ tunnel protection ipsec profile proaz
+
+ ip ospf 1 area 0
+ ip ospf network point-to-multipoint
+
+
+=============================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=============================================================
+conf t
+hostname DC-Core1
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.3 255.255.255.255
+
+interface e0/0
+ description TO DC-RE1
+ no switchport
+ ip address 10.10.13.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ duplex full
+ no sh
+
+interface e0/1
+ description TO DC-RE2
+ no switchport
+ ip address 10.10.23.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ duplex full
+ no sh
+
+interface e1/0
+ description TO DC-FPA1
+ no switchport
+ ip address 10.10.35.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+interface e1/1
+ description TO DC-FPA2
+ no switchport
+ ip address 10.10.36.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+interface Ethernet0/2
+ description Link to DC-CSW1 for routing
+ no switchport
+ ip address 10.10.34.1 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+router ospf 1
+ router-id 172.16.10.3
+ network 10.0.0.0 0.255.255.255 area 1
+ip route 0.0.0.0 0.0.0.0 Ethernet0/0
+
+
+
+
+=============================================================
+conf t
+hostname DC-Core2
+
+! ---------- Domain, NTP ----------
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+! ---------- AAA,USERS,RADIUS ----------
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+! ---------- Interface ----------
+interface Loopback0
+ ip address 172.16.10.4 255.255.255.255
+
+interface e0/0
+ description TO DC-RE1
+ no switchport
+ ip address 10.10.14.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ duplex full
+
+interface e0/1
+ description TO DC-RE2
+ no switchport
+ ip address 10.10.24.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ duplex full
+
+interface e1/0
+ description TO DC-FPA1
+ no switchport
+ ip address 10.10.45.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+interface e1/1
+ description TO DC-FPA2
+ no switchport
+ ip address 10.10.46.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+interface Ethernet0/2
+ description Link to DC-CSW1 for routing
+ no switchport
+ ip address 10.10.34.2 255.255.255.252
+ ip ospf authentication key-chain az
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ no sh
+
+
+
+
+! ---------- OSPF ----------
+router ospf 1
+ router-id 172.16.10.4
+ network 10.0.0.0 0.255.255.255 area 1
+ip route 0.0.0.0 0.0.0.0 Ethernet0/1
+
+=======================================================
+ip domain name hahs.org
+clock timezone AST 3
+ntp server 192.168.100.10 prefer
+
+
+aaa new-model
+username arslan privilege 15 secret arslan
+radius server NPS_SERVER
+ address ipv4 192.168.100.30 auth-port 1812 acct-port 1813
+ key 123
+ exit
+aaa group server radius RADIUS_GROUP
+server name NPS_SERVER
+exit
+
+
+aaa authentication login default group RADIUS_GROUP local
+aaa authorization exec default group RADIUS_GROUP local
+ip radius source-interface Loopback0
+
+
+line vty 0 4
+login authentication default
+authorization exec default
+transport input all
+exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+=======================================================================
+old
+=======================================================================
+default interface  g0/0 
+default interface  g1/0
+default interface  g2/0        
+ default interface  g3/0
+ default interface  g4/0
+router ospf 1
+ no network 1.0.0.0 0.0.0.3 area 1
+  exit       
+no ip route 0.0.0.0 0.0.0.0 1.0.0.2
+======================================
+ default interface  g3/0
+ default interface  g4/0
+ default interface  s4/0
+no ip nat inside source list 10 interface Serial4/0 overload
+no ip route 0.0.0.0 0.0.0.0 1.1.3.2
+ip nat inside source list 10 interface g3/0 overload
+
+interface Tunnel1
+ ip address 10.10.255.1 255.255.255.0
+ tunnel source g3/0
+
+crypto isakmp key azzan address 1.1.2.1        
+crypto isakmp key azzan address 1.1.4.1
+
+interface Serial4/0
+ ip address 1.1.3.1 255.255.255.252
+ ip nat outside
+ ip virtual-reassembly in
+ serial restart-delay 0
+
+access-list 10 permit 21.5.5.1
+access-list 10 permit 29.2.2.0 0.0.0.3
+================================================================
+default interface  e0/1
+default interface  e0/2
+default interface  e/0
+
+router ospf 1
+ no network 21.4.4.2 0.0.0.0 area 1
+ no  network 23.2.2.0 0.0.0.3 area 1
+ no  network 24.2.2.0 0.0.0.3 area 1
+ no  network 26.1.1.0 0.0.0.3 area 1
+ no  network 27.1.1.0 0.0.0.3 area 1
+ no  network 28.1.1.0 0.0.0.3 area 1
+ no  network 29.1.1.0 0.0.0.3 area 1
+
+no ip route 0.0.0.0 0.0.0.0 Ethernet3/0
+============================================================
+default interface  e0/1
+default interface  e0/2
+default interface  e0/3
+default interface  e2/0
+
+router ospf 1
+no network 21.4.4.2 0.0.0.0 area 1
+no  network 22.2.2.0 0.0.0.3 area 1
+no  network 25.2.2.0 0.0.0.3 area 1
+no  network 26.2.2.0 0.0.0.3 area 1
+no  network 27.2.2.0 0.0.0.3 area 1
+no  network 28.2.2.0 0.0.0.3 area 1
+no  network 29.2.2.0 0.0.0.3 area 1
+=======================================================================
+
+
+
+

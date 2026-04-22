@@ -1,0 +1,144 @@
+
+raad/raad
+===============================================
+ciscoasa# show configuration
+: Serial Number: 9A80638CC00
+: Hardware:   ASAv, 2048 MB RAM, CPU Pentium II 2904 MHz
+: Written by raad at 20:39:39.839 UTC Sun Apr 5 2026
+!
+ASA Version 9.8(1)
+!
+hostname ciscoasa
+username raad password raad privilege 15
+names
+zone lan
+zone wan
+
+!
+interface GigabitEthernet0/0
+ description connect to B2-RE1
+ nameif re1
+ security-level 50
+ zone-member wan
+ ip address 10.30.14.2 255.255.255.252
+ authentication key eigrp 100 p2x4pD9R6Y++ key-id 1
+ authentication mode eigrp 100 md5
+ ospf network point-to-point non-broadcast
+!
+interface GigabitEthernet0/1
+ description connect to B2-RE2
+ nameif re2
+ security-level 50
+ zone-member wan
+ ip address 10.30.24.2 255.255.255.252
+ authentication key eigrp 100 p2x4pD9R6Y++ key-id 1
+ authentication mode eigrp 100 md5
+ ospf network point-to-point non-broadcast
+!
+interface GigabitEthernet0/2
+ description connect to B2-CSW2
+ nameif csw2
+ security-level 99
+ zone-member lan
+ ip address 10.30.46.1 255.255.255.252
+ authentication key eigrp 100 p2x4pD9R6Y++ key-id 1
+ authentication mode eigrp 100 md5
+ ospf network point-to-point non-broadcast
+!
+interface GigabitEthernet0/3
+ description connect to B2-CSW1
+ nameif csw1
+ security-level 99
+ zone-member lan
+ ip address 10.30.45.1 255.255.255.252
+ authentication key eigrp 100 p2x4pD9R6Y++ key-id 1
+ authentication mode eigrp 100 md5
+ ospf network point-to-point non-broadcast
+!
+Interface GigabitEthernet0/6
+ no shutdown
+ description connect to B2-FG
+ nameif B2-FG
+ ip address  10.30.34.2 255.255.255.252
+ security-level 99
+ zone-member lan
+
+interface GigabitEthernet0/6
+ shutdown
+ no nameif
+ no security-level
+ no ip address
+!
+interface Management0/0
+ nameif inside
+ security-level 100
+ ip address 192.168.30.2 255.255.255.0
+!
+
+object-group-search access-control
+object network pat
+ subnet 192.168.30.0 255.255.255.0
+object network pat2
+ subnet 192.168.30.0 255.255.255.0
+object-group network DM_INLINE_NETWORK_1
+ network-object 192.168.30.0 255.255.255.0
+ network-object 34.1.1.0 255.255.255.252
+object-group network DM_INLINE_NETWORK_2
+ network-object 192.168.30.0 255.255.255.0
+
+access-list lan_access_in_1 extended permit icmp any object-group DM_INLINE_NETWORK_2
+access-list wan_access_in_1 extended permit icmp any object-group DM_INLINE_NETWORK_1
+access-list inside_access_in extended permit icmp any any
+access-list re1_access_in extended permit ip any any
+access-list global_access line 1 extended permit ip any any 
+      access-group global_access global
+pager lines 23
+icmp unreachable rate-limit 1 burst-size 1
+
+object network pat
+ nat (any,re2) dynamic interface
+object network pat2
+ nat (any,csw2) dynamic interface
+access-group wan_access_in_1 in interface re2
+access-group lan_access_in_1 in interface csw2
+access-group inside_access_in in interface inside
+access-group re1_access_in in interface re1
+
+
+router eigrp 100
+ eigrp router-id 172.16.30.4
+ network 10.30.14.0 255.255.255.252
+ network 10.30.24.0 255.255.255.252
+ network 10.30.45.0 255.255.255.252
+ network 10.30.46.0 255.255.255.252
+!
+user-identity default-domain LOCAL
+aaa authentication http console LOCAL
+aaa authentication login-history
+http server enable
+http 192.168.30.0 255.255.255.0 inside
+telnet 192.168.30.0 255.255.255.0 inside
+ssh 192.168.30.0 255.255.255.0 inside
+aaa authentication ssh console LOCAL 
+aaa authentication telnet console LOCAL 
+
+
+policy-map global_policy
+ class inspection_default
+  inspect ip-options
+  inspect netbios
+  inspect rtsp
+  inspect sunrpc
+  inspect tftp
+  inspect xdmcp
+  inspect dns preset_dns_map
+  inspect ftp
+  inspect h323 h225
+  inspect h323 ras
+  inspect rsh
+  inspect esmtp
+  inspect sqlnet
+  inspect sip
+  inspect skinny
+  inspect icmp
+

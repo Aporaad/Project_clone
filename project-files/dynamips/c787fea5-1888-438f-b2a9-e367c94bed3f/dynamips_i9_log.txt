@@ -1,0 +1,65 @@
+Apr 19 21:07:27.867 HYPERVISOR: Release 0.2.17-x86/Windows (tag 2017072410)
+Apr 19 21:07:27.868 HYPERVISOR: Started on TCP port = 4118.
+Apr 19 21:07:28.372 HYPERVISOR: exec_cmd: hypervisor version 
+Apr 19 21:07:28.372 HYPERVISOR: exec_cmd: hypervisor working_dir C:\Users\raad\GNS3\projects\project\project-files\dynamips 
+Apr 19 21:07:28.372 GENERAL: working_dir=C:\Users\raad\GNS3\projects\project\project-files\dynamips
+Apr 19 21:07:28.373 HYPERVISOR: exec_cmd: hypervisor working_dir C:\Users\raad\GNS3\projects\project\project-files\dynamips\280b77cf-6d68-4a78-84df-528c05f4aa6f 
+Apr 19 21:07:28.373 GENERAL: working_dir=C:\Users\raad\GNS3\projects\project\project-files\dynamips\280b77cf-6d68-4a78-84df-528c05f4aa6f
+Apr 19 21:07:28.381 HYPERVISOR: exec_cmd: vm create R6 10 c2691 
+Apr 19 21:07:28.382 VM: VM R6 created.
+Apr 19 21:07:28.384 HYPERVISOR: exec_cmd: vm set_con_tcp_port R6 5082 
+Apr 19 21:07:28.384 HYPERVISOR: exec_cmd: c2691 get_mac_addr R6 
+Apr 19 21:07:28.384 HYPERVISOR: exec_cmd: vm set_disk0 R6 0 
+Apr 19 21:07:28.384 HYPERVISOR: exec_cmd: vm set_exec_area R6 64 
+Apr 19 21:07:28.386 HYPERVISOR: exec_cmd: vm set_ios R6 C:/Users/raad/GNS3/images/IOS/c2691-adventerprisek9-mz[1][1].124-5a.image 
+Apr 19 21:07:28.386 HYPERVISOR: exec_cmd: c2691 set_mac_addr R6 c00a.1dd4.0000 
+Apr 19 21:07:28.386 HYPERVISOR: exec_cmd: vm set_nvram R6 256 
+Apr 19 21:07:28.386 HYPERVISOR: exec_cmd: vm set_ram R6 192 
+Apr 19 21:07:28.387 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:07:28.387 HYPERVISOR: exec_cmd: vm slot_add_binding R6 1 0 NM-4T 
+Apr 19 21:07:28.388 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:07:28.388 HYPERVISOR: exec_cmd: vm slot_add_binding R6 0 16 WIC-2T 
+Apr 19 21:07:28.388 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:07:28.388 HYPERVISOR: exec_cmd: vm slot_add_binding R6 0 32 WIC-1T 
+Apr 19 21:07:28.389 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:07:28.389 HYPERVISOR: exec_cmd: vm slot_add_binding R6 0 48 WIC-2T 
+Apr 19 21:08:20.403 HYPERVISOR: exec_cmd: nio create_udp udp-71729113-c677-4966-bae3-313597f4a823 10068 127.0.0.1 10069 
+Apr 19 21:08:20.652 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R6 0 0 udp-71729113-c677-4966-bae3-313597f4a823 
+Apr 19 21:08:20.653 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:15:12.270 HYPERVISOR: exec_cmd: vm create Ghost 0 c2691 
+Apr 19 21:15:12.271 VM: VM Ghost created.
+Apr 19 21:15:12.272 HYPERVISOR: exec_cmd: vm set_ios Ghost C:/Users/raad/GNS3/images/IOS/c2691-adventerprisek9-mz[1][1].124-5a.image 
+Apr 19 21:15:12.273 HYPERVISOR: exec_cmd: vm set_ghost_status Ghost 1 
+Apr 19 21:15:12.273 HYPERVISOR: exec_cmd: vm set_ghost_file Ghost C:\Users\raad\GNS3\projects\project\project-files\dynamips\c2691-adventerprisek9-mz[1][1].124-5a.image-192.ghost 
+Apr 19 21:15:12.274 HYPERVISOR: exec_cmd: vm set_ram Ghost 192 
+Apr 19 21:15:12.274 HYPERVISOR: exec_cmd: vm get_status Ghost 
+Apr 19 21:15:12.278 HYPERVISOR: exec_cmd: vm set_config Ghost configs\i0_startup-config.cfg 
+Apr 19 21:15:12.278 HYPERVISOR: exec_cmd: vm start Ghost 
+Apr 19 21:15:12.769 HYPERVISOR: exec_cmd: vm get_status Ghost 
+Apr 19 21:15:12.771 HYPERVISOR: exec_cmd: vm stop Ghost 
+Apr 19 21:15:12.973 VM: VM Ghost shutdown.
+Apr 19 21:15:12.973 HYPERVISOR: exec_cmd: vm extract_config Ghost 
+Apr 19 21:15:12.975 HYPERVISOR: exec_cmd: vm clean_delete Ghost 
+Apr 19 21:15:12.975 VM: VM Ghost destroyed.
+Apr 19 21:15:12.982 HYPERVISOR: exec_cmd: vm set_ghost_status R6 2 
+Apr 19 21:15:12.982 HYPERVISOR: exec_cmd: vm set_ghost_file R6 C:\Users\raad\GNS3\projects\project\project-files\dynamips\c2691-adventerprisek9-mz[1][1].124-5a.image-192.ghost 
+Apr 19 21:15:12.983 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 19 21:15:12.983 HYPERVISOR: exec_cmd: vm set_config R6 configs\i10_startup-config.cfg 
+Apr 19 21:15:12.983 HYPERVISOR: exec_cmd: vm start R6 
+Apr 20 05:48:08.560 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 20 05:48:08.565 HYPERVISOR: exec_cmd: vm stop R6 
+Apr 20 05:48:08.758 VM: VM R6 shutdown.
+Apr 20 05:48:08.766 HYPERVISOR: exec_cmd: vm extract_config R6 
+Apr 20 06:13:41.785 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 20 06:13:41.790 HYPERVISOR: exec_cmd: vm extract_config R6 
+Apr 20 06:13:56.726 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 20 06:13:56.728 HYPERVISOR: exec_cmd: vm extract_config R6 
+Apr 20 06:14:01.721 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 20 06:14:01.725 HYPERVISOR: exec_cmd: vm extract_config R6 
+Apr 20 06:14:04.377 HYPERVISOR: exec_cmd: vm get_status R6 
+Apr 20 06:14:04.421 HYPERVISOR: exec_cmd: vm extract_config R6 
+Apr 20 06:14:04.433 HYPERVISOR: exec_cmd: vm delete R6 
+Apr 20 06:14:04.436 VM: VM R6 destroyed.
+Apr 20 06:14:04.456 HYPERVISOR: exec_cmd: hypervisor stop 
+Apr 20 06:14:04.794 HYPERVISOR: Stopped.
+Apr 20 06:14:04.794 GENERAL: reset done.

@@ -1,0 +1,314 @@
+&quot;DC 10&quot; {
+  ip-netmask 10.10.0.0/16 ;
+}
+
+
+&quot;DC 172.16.10&quot; {
+  ip-netmask 172.16.10.0/24 ;
+}
+
+
+icnp {
+  interval 5 ;
+  action wait-recover ;
+}
+
+
+core {
+  action {
+    forward {
+      nexthop {
+        ip-address 10.10.36.1 ;
+      }
+      monitor {
+        profile icnp ;
+        disable-if-unreachable yes ;
+        ip-address 10.10.36.1/32 ;
+      }
+      egress-interface ethernet1/5 ;
+    }
+  }
+  from {
+    zone Server ;
+  }
+  enforce-symmetric-return {
+    enabled no ;
+  }
+  source [ &quot;DC 10&quot; &quot;DC 172.16.10&quot;];
+  destination any ;
+  source-user any ;
+  application any ;
+  service any ;
+}
+
+
+================================================================
+set deviceconfig system type static
+set deviceconfig system timezone Asia/Aden
+set deviceconfig system hostname DC-PA1
+set deviceconfig system ip-address 192.168.10.1
+set deviceconfig system netmask 255.255.255.0
+set deviceconfig system default-gateway 192.168.10.100
+set deviceconfig system domain hahs.org
+
+
+!--------------------------Management Profile (Ping) ---------!
+set network profiles interface-management-profile ping ping yes
+set network profiles interface-management-profile ping permitted-ip 0.0.0.0/0
+
+
+!-------------------------- interfaces ---------!
+set network interface loopback loopback ip 172.16.10.6/32
+set network interface loopback interface-management-profile ping
+
+
+set network interface ethernet ethernet1/1 layer3 ip 10.10.106.2/30
+set network interface ethernet ethernet1/1 layer3   interface-management-profile ping
+set network interface ethernet ethernet1/1 comment "connect to DC-DMZ-DSW2"
+set network interface ethernet ethernet1/1 link-state up
+
+set network interface ethernet ethernet1/2 layer3 ip 10.10.96.2/30
+set network interface ethernet ethernet1/2 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/2 comment "connect to DC-DMZ-DSW1"
+set network interface ethernet ethernet1/2 link-state up
+
+set network interface ethernet ethernet1/3 layer3 ip 10.10.86.2/30
+set network interface ethernet ethernet1/3 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/3 comment "conncte to DCSer-DS2"
+set network interface ethernet ethernet1/3 link-state up
+
+set network interface ethernet ethernet1/4 layer3 ip 10.10.76.2/30
+set network interface ethernet ethernet1/4 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/4 comment "conncte to DCSer-DS1"
+set network interface ethernet ethernet1/4 link-state up
+
+set network interface ethernet ethernet1/5 layer3 ip 10.10.36.2/30
+set network interface ethernet ethernet1/5 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/5 comment "conncte to DC-Core 1"
+set network interface ethernet ethernet1/5 link-state up
+
+set network interface ethernet ethernet1/6 layer3 ip 10.10.46.2/30
+set network interface ethernet ethernet1/6 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/6 comment "conncte to DC-Core 2"
+set network interface ethernet ethernet1/6 link-state up
+
+set network interface ethernet ethernet1/7 layer3 ip 10.10.126.2/30
+set network interface ethernet ethernet1/7 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/7 comment "conncte to DC-admin-DSW2"
+set network interface ethernet ethernet1/7 link-state up
+
+set network interface ethernet ethernet1/8 layer3 ip 10.10.116.2/30
+set network interface ethernet ethernet1/8 layer3  interface-management-profile ping
+set network interface ethernet ethernet1/8 comment "conncte to DC-admin-DSW1"
+set network interface ethernet ethernet1/8 link-state up
+
+
+!--------------------------zone ---------!
+set zone Server network layer3 ethernet1/3 
+set zone Server network layer3 ethernet1/4
+set zone Server network enable-packet-buffer-protection no
+
+set zone admin network layer3 ethernet1/7
+set zone admin network layer3 ethernet1/8
+
+set zone dmsSer network layer3 ethernet1/2
+set zone dmsSer network layer3 ethernet1/1
+
+set zone core network layer3 ethernet1/5
+set zone core network layer3 ethernet1/6
+set zone core network enable-packet-buffer-protection no
+!--------------------------virtual-router ---------!
+
+set network virtual-router ospf interface ethernet1/1
+set network virtual-router ospf interface ethernet1/2
+set network virtual-router ospf interface ethernet1/3
+set network virtual-router ospf interface ethernet1/4
+set network virtual-router ospf interface ethernet1/5
+set network virtual-router ospf interface ethernet1/6
+set network virtual-router ospf interface ethernet1/7
+set network virtual-router ospf interface ethernet1/8
+set network virtual-router ospf interface loopback
+
+
+set network virtual-router ospf protocol ospf enable yes
+set network virtual-router ospf protocol ospf router-id 172.16.10.6
+set network virtual-router ospf protocol ospf reject-default-route no
+!-------------------------- ---------!
+set network virtual-router ospf protocol ospf area 0.0.0.1 type normal
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/1 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/1 link-type  p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/2 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/2 link-type p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/3 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/3 link-type p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/4 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/4 link-type p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/5 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/5 link-type p2p
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/5 metric 1
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/5 priority 1
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/6 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/6 link-type p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/7 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/7 link-type p2p
+
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/8 enable yes
+set network virtual-router ospf protocol ospf area 0.0.0.1 interface ethernet1/8 link-type p2p
+
+
+!--------------------------security rules ---------!
+set rulebase security rules "core to server test" from admin
+set rulebase security rules "core to server test" from core
+set rulebase security rules "core to server test" from dmsSer
+set rulebase security rules "core to server test" from Server
+
+set rulebase security rules "core to server test" to admin
+set rulebase security rules "core to server test" to core
+set rulebase security rules "core to server test" to dmsSer
+set rulebase security rules "core to server test" to Server
+
+set rulebase security rules "core to server test" source any
+set rulebase security rules "core to server test" destination any
+set rulebase security rules "core to server test" application any
+set rulebase security rules "core to server test" service any
+set rulebase security rules "core to server test" action allow
+set rulebase security rules "core to server test" log-start yes
+
+!-------------------------- nat rules ---------!
+set rulebase nat rules all-1 from admin
+set rulebase nat rules all-1 from core
+set rulebase nat rules all-1 from dmsSer
+set rulebase nat rules all-1 from Server
+set rulebase nat rules all-1 to Server
+set rulebase nat rules all-1 source any
+set rulebase nat rules all-1 destination any
+set rulebase nat rules all-1 service any
+
+set rulebase nat rules all-1-1 from admin
+set rulebase nat rules all-1-1 from core
+set rulebase nat rules all-1-1 from dmsSer
+set rulebase nat rules all-1-1 from Server
+set rulebase nat rules all-1-1 to admin
+set rulebase nat rules all-1-1 source any
+set rulebase nat rules all-1-1 destination any
+set rulebase nat rules all-1-1 service any
+
+set rulebase nat rules all from admin
+set rulebase nat rules all from core
+set rulebase nat rules all from Server
+set rulebase nat rules all to core
+set rulebase nat rules all source any
+set rulebase nat rules all destination any
+set rulebase nat rules all service any
+
+!-------------------------- ---------!
+
+
+!-------------------------- ---------!
+
+set address "DC 10" ip-netmask 10.10.0.0/16
+set address "DC 192" ip-range 192.168.10.0-192.168.19.255
+set address "DC 172" ip-netmask 172.16.10.0/24
+=========================================================
+!----DC server -----!
+set address "DC 192 server" ip-range 192.168.100.0-192.168.100.255
+set address "DC 172 server" ip-range 172.16.10.7-172.16.10.8
+set address "DC 10 server"  ip-range 10.10.71.0-10.10.89.255
+set address-group "DC server" static "DC 10 server"
+set address-group "DC server" static "DC 172 server"
+set address-group "DC server" static "DC 192 server"
+
+!----DC DMZsrv
+set address "DC 192 DMZsrv" ip-range 192.168.130.0-192.168.130.255
+set address "DC 172 DMZsrv" ip-range 172.16.10.9-172.16.10.10
+set address "DC 10 DMZsrv"  ip-range 10.10.91.0-10.10.110.255
+set address-group "DC DMZsrv" static "DC 10 DMZsrv"
+set address-group "DC DMZsrv" static "DC 172 DMZsrv"
+set address-group "DC DMZsrv" static "DC 192 DMZsrv"
+
+!----DC admin
+set address "DC 192 admin" ip-range 192.168.200.0-192.168.200.255
+set address "DC 172 admin" ip-range 172.16.10.11-172.16.10.12
+set address "DC 10 admin"  ip-range 10.10.111.0-10.10.129.255
+set address-group "DC admin" static "DC 10 admin"
+set address-group "DC admin" static "DC 172 admin"
+set address-group "DC admin" static "DC 192 admin"
+
+!----DC Core
+set address "DC 172 core" ip-range 172.16.10.1-172.16.10.4
+set address "DC 10 core"  ip-range 10.10.12.0-10.10.49.255
+set address-group "DC core" static "DC 10 core"
+set address-group "DC core" static "DC 172 core"
+
+!----DC 
+set address-group "DC" static "DC server"
+set address-group "DC" static "DC DMZsrv"
+set address-group "DC" static "DC admin"
+set address-group "DC" static "DC core"
+
+!-----------------B1 ------------------!
+set address "B1 10" ip-netmask 10.20.0.0/16
+set address "B1 192" ip-range 192.168.20.0-192.168.29.255
+set address "B1 172" ip-netmask 172.16.20.0/24
+set address-group "B1" static "B1 10"
+set address-group "B1" static "B1 172"
+set address-group "B1" static "B1 192"
+
+!-----------------B2 ------------------!
+set address "B2 10" ip-netmask 10.30.0.0/16
+set address "B2 192" ip-range 192.168.30.0-192.168.39.255
+set address "B2 172" ip-netmask 172.16.30.0/24
+set address-group "B2" static "B2 10"
+set address-group "B2" static "B2 172"
+set address-group "B2" static "B2 192"
+
+
+============================================================
+
+set network profiles monitor-profile ping action fail-over interval 5 
+
+
+set rulebase pbf rules "server to B1_B2_Core" from Server
+set rulebase pbf rules "server to B1_B2_Core" source "DC server"
+set rulebase pbf rules "server to B1_B2_Core" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "server to B1_B2_Core" application any
+set rulebase pbf rules "server to B1_B2_Core" service any
+
+set rulebase pbf rules "server to B1_B2_Core" action forward nexthop ip-address 10.10.35.1
+set rulebase pbf rules "server to B1_B2_Core" action forward egress-interface ethernet1/5
+
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor profile ping
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "server to B1_B2_Core" action forward monitor disable-if-unreachable yes
+
+
+!set rulebase pbf rules "server to B1_B2_Core" enforce-symmetric-return yes
+
+!----------- --------------!
+set rulebase pbf rules "DMZ to B1_B2_Core" from DMZsrv
+set rulebase pbf rules "DMZ to B1_B2_Core" source "DC DMZsrv"
+set rulebase pbf rules "DMZ to B1_B2_Core" destination [ B1 B2 "DC core" ]
+set rulebase pbf rules "DMZ to B1_B2_Core" application any
+set rulebase pbf rules "DMZ to B1_B2_Core" service any
+
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward nexthop ip-address 10.10.35.1
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward egress-interface ethernet1/5
+
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor profile ping
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor ip-address 10.10.12.3
+set rulebase pbf rules "DMZ to B1_B2_Core" action forward monitor disable-if-unreachable yes
+
+=================================
+
+
+============================================
+set network interface tunnel units tunnel.1 ip 20.20.20.1/24
+set network interface tunnel units tunnel.1 interface-management-profile ping
+set network interface tunnel units tunnel.1 comment "dmvpn"

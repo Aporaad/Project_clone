@@ -1,0 +1,46 @@
+===============================
+جدران الحماية (Firewalls)
+   - ASA Firewall
+   - Fortigate Firewall
+   - Sophos Firewall
+   - Palo Alto Firewall
+====================================
+#---DataCenter DC = 
+- Palo Alto Firewall
+DC-PA1
+DC-PA2
+====================================
+#--- Branch 1 
+- Sophos Firewall
+
+B1-Sophos1
+B1-Sophos2
+==================================
+Branch 2
+- ASA Firewall
+- Fortigate Firewall
+
+B2-ASA
+B2-FG
+=======================================================================configuration 
+====================================
+#---DataCenter DC 
+- Palo Alto Firewall
+DC-PA1
+
+================================
+DC-PA2
+====================================
+#--- Branch 1 
+- Sophos Firewall
+
+B1-Sophos1
+B1-Sophos2
+==================================
+Branch 2
+- ASA Firewall
+- Fortigate Firewall
+
+B2-ASA
+B2-FG
+===================================

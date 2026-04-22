@@ -1,0 +1,59 @@
+
+IDS (Intrusion prevention system)
+IPS (Intrusion detection system)
+
+-snort port -in switch
+-SPAN
+-RSPAN
+-ERSPAN		-cisco
+
+firepower
+
+---------------------------------------------------
+-SPAN
+-RSPAN
+monitor session 1 source int e0/1,e0/2
+monitor session 1 destination int e0/3
+
+show monitor session 1
+show int e0/3
+
+monitor session 1 destination int e0/3 encapsulation 
+
+------------
+hostname sw1
+int e0/0
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+no sh
+vlan 200
+remote-span
+monitor session 1 source remote vlan 200 
+monitor session 1 destination int e0/3
+
+
+hostname sw2
+int e0/0
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+no sh
+int e0/1
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+no sh
+vlan 200
+remote-span
+
+hostname sw3
+int e0/1
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+no sh
+vlan 200
+remote-span
+
+monitor session 1 source int e0/2,e0/3
+monitor session 1 destination remote vlan 200
+
+
+

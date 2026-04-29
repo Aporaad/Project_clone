@@ -1,125 +1,18 @@
-===============================================
-hostname B1-CSW1
-ip domain-name hahs.org
-key chain az
- key 1
-  key-string p2x4pD9R6Y++
-   cryptographic-algorithm md5
-
-interface Loopback0
- ip address 172.16.20.5 255.255.255.255
- ip ospf 1 area 1
-!
-interface Ethernet0/0
-description Link to B1-SF1 PortC
- no switchport
- ip address 10.20.35.2 255.255.255.252
- ip ospf network point-to-point
- ip ospf 1 area 1
- duplex full
-!
-interface Ethernet0/1
- description Link to B1-SF2 PortE
- no switchport
- ip address 10.20.45.2 255.255.255.252
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full
-interface Ethernet0/2
- description Link to B1-CSW-2 e0/2
- no switchport
- ip address 10.20.56.1 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full!
-interface Ethernet1/0
- description Link to B1-DSW-1 e0/0
- no switchport
- ip address 10.20.57.1 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full!
-interface Ethernet1/1
- description Link to B1-DSW-2 e0/1
- no switchport
- ip address 10.20.58.1 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full!
-router ospf 1
- router-id 172.16.20.5
- network 10.10.0.0 0.0.255.255 area 1
- exit 
-
-===============================================
-hostname B1-CSW2
-ip domain-name hahs.org
-key chain az
- key 1
-  key-string p2x4pD9R6Y++
-   cryptographic-algorithm md5
-
-interface Loopback0
- ip address 172.16.20.6 255.255.255.255
- ip ospf 1 area 1
-!
-interface Ethernet0/0
-description Link to B1-SF1 PortC
- no switchport
- ip address 10.20.36.2 255.255.255.252
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full!
-interface Ethernet0/1
- description Link to B1-SF2 PortE
- no switchport
- ip address 10.20.46.2 255.255.255.252
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full
-interface Ethernet0/2
- description Link to B1-CSW-1 e0/2
- no switchport
- ip address 10.20.56.2 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
-  duplex full!
-interface Ethernet1/0
- description Link to B1-DSW-1 e0/0
- no switchport
- ip address 10.20.67.1 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
- duplex full!
-interface Ethernet1/1
- description Link to B1-DSW-2 e0/1
- no switchport
- ip address 10.20.68.1 255.255.255.252
- ip ospf authentication key-chain az
- ip ospf network point-to-point
- ip ospf 1 area 1
- duplex full!
-router ospf 1
- router-id 172.16.20.6
- network 10.10.0.0 0.0.255.255 area 1
- exit 
-
-=================================================================
-
-
-
-
 
 ===============================================
 hostname B1-DSW1
+ip domain-name hahs.org
 spanning-tree mode mst
 spanning-tree mst 0 priority 4096
-ip domain-name hahs.org
+
+spanning-tree mst configuration
+ name B1-hahs
+ revision 1
+ instance 1 vlan 10,20,30
+ instance 2 vlan 40 ,50,60
+
+spanning-tree mst 1 priority 4096
+spanning-tree mst 2 priority 28672
 key chain az
  key 1
   key-string p2x4pD9R6Y++
@@ -128,52 +21,46 @@ key chain az
 !------------- Interface ---------------
 
 interface Loopback0
- ip address 172.16.20.7 255.255.255.255
- ip ospf 1 area 1
+ ip address 172.16.20.5 255.255.255.255
+ ip ospf 1 area 2
 !
 interface Ethernet0/0
-description Link to B1-CSW1 e1/0
+description Link to B1-SF1 PortC
  no switchport
- ip address 10.20.57.2 255.255.255.252
-ip ospf authentication key-chain az
+ ip address 10.20.35.2 255.255.255.252
  ip ospf network point-to-point
- ip ospf 1 area 1
- no sh 
+ ip ospf 1 area 2
  duplex full
 !
 interface Ethernet0/1
- description Link to  B1-CSW1 e1/1
+ description Link to B1-SF2 PortE
  no switchport
- ip address 10.20.67.2 255.255.255.252
-ip ospf authentication key-chain az
+ ip address 10.20.45.2 255.255.255.252
  ip ospf network point-to-point
- ip ospf 1 area 1
- no sh 
- duplex full
-
+ ip ospf 1 area 2
+  duplex full
 interface Ethernet0/3
- description Link to B1-CD-2 e0/2 for Routing
+ description Link to B1-DS2-2 e0/2 for Routing
  no switchport
- ip address 10.20.78.1 255.255.255.252
+ ip address 10.20.56.1 255.255.255.252
  ip ospf authentication key-chain az
  ip ospf network point-to-point
- ip ospf 1 area 1
- no sh 
- duplex full
+ ip ospf 1 area 2
+  duplex full
 
 interface Ethernet3/0
  description Link to Server
  no switchport
  ip address 192.168.110.100 255.255.255.0
  ip ospf authentication key-chain az
- ip ospf 1 area 1
+ ip ospf 1 area 2
  no sh 
  duplex full
 
 !--------------- ospf -------------------
 router ospf 1
- router-id 172.16.20.7
- network 10.10.0.0 0.0.255.255 area 1
+ router-id 172.16.20.5
+ network 10.20.0.0 0.0.255.255 area 2
  exit 
 
 
@@ -196,9 +83,9 @@ interface Ethernet0/2
  description Link to B1-DSW2 e0/2 for all vlan
  switchport trunk encapsulation dot1q
  switchport mode trunk
- switchport trunk allowed vlan 10,20,30,40,50,60
+ switchport trunk allowed vlan 1,10,20,30,40,50,60
  switchport nonegotiate
- spanning-tree portfast edge trunk
+ spanning-tree link-type point-to-point
  spanning-tree cost 1000
  no sh
 
@@ -222,6 +109,8 @@ interface Vlan20
 interface Vlan30
  ip address 192.168.23.101 255.255.255.0
  vrrp 30 ip 192.168.23.100
+ vrrp 30 priority 150
+ vrrp 30 preempt
  vrrp 30 authentication text HaHs$VL
  no sh
 !
@@ -234,8 +123,6 @@ interface Vlan40
 interface Vlan50
  ip address 192.168.25.101 255.255.255.0
  vrrp 50 ip 192.168.25.100
- vrrp 50 priority 150
- vrrp 50 preempt
  vrrp 50 authentication text HaHs$VL
  no sh
 !
@@ -249,18 +136,25 @@ interface Vlan60
 
 
 router ospf 1
- network 192.168.21.0 0.0.0.255 area 1
- network 192.168.22.0 0.0.0.255 area 1
- network 192.168.23.0 0.0.0.255 area 1
- network 192.168.24.0 0.0.0.255 area 1
- network 192.168.25.0 0.0.0.255 area 1
- network 192.168.26.0 0.0.0.255 area 1
+ network 192.168.21.0 0.0.0.255 area 2
+ network 192.168.22.0 0.0.0.255 area 2
+ network 192.168.23.0 0.0.0.255 area 2
+ network 192.168.24.0 0.0.0.255 area 2
+ network 192.168.25.0 0.0.0.255 area 2
+ network 192.168.26.0 0.0.0.255 area 2
 
+ passive-interface g1/0
+ passive-interface g1/1
+ passive-interface g1/2
+ passive-interface g1/3
+ passive-interface g2/0
+ passive-interface g2/1
  passive-interface Vlan10
- passive-interface Vlan11
  passive-interface Vlan20
  passive-interface Vlan30
  passive-interface Vlan40
+ passive-interface Vlan50
+ passive-interface Vlan60
 
 !--------------- port-channel -------------------
 
@@ -274,6 +168,7 @@ interface range e1/0-1
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
+ spanning-tree link-type point-to-point
  channel-group 1 mode desirable
  switchport trunk allowed vlan 10,20
 no sh
@@ -289,6 +184,7 @@ interface range e1/2-3
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
+ spanning-tree link-type point-to-point
  channel-group 2 mode desirable
  switchport trunk allowed vlan  30,40
 no sh
@@ -312,50 +208,55 @@ no sh
 ================================================================================
 ===============================================
 hostname B1-DSW2
-spanning-tree mode mst
 ip domain-name hahs.org
+spanning-tree mode mst
+
+spanning-tree mst configuration
+ name B1-hahs
+ revision 1
+ instance 1 vlan 10,20,30
+ instance 2 vlan 40 ,50,60
+
+spanning-tree mst 1 priority 28672
+spanning-tree mst 2 priority  4096
+
 key chain az
  key 1
   key-string p2x4pD9R6Y++
    cryptographic-algorithm md5
 
-!------------- Interface ---------------
 interface Loopback0
- ip address 172.16.20.8 255.255.255.255
- ip ospf 1 area 1
+ ip address 172.16.20.6 255.255.255.255
+ ip ospf 1 area 2
 !
 interface Ethernet0/0
-description Link to B1-CSW1 e1/1
+description Link to B1-SF1 PortE
  no switchport
- ip address 10.20.58.2 255.255.255.252
-ip ospf authentication key-chain az
+ ip address 10.20.36.2 255.255.255.252
  ip ospf network point-to-point
- ip ospf 1 area 1
+ ip ospf 1 area 2
  duplex full
 !
 interface Ethernet0/1
- description Link to  B1-CSW2 e1/1
+ description Link to B1-SF2 PortE
  no switchport
- ip address 10.20.68.2 255.255.255.252
- ip ospf authentication key-chain az
+ ip address 10.20.46.2 255.255.255.252
  ip ospf network point-to-point
- ip ospf 1 area 1
- duplex full
-
+ ip ospf 1 area 2
+  duplex full
 interface Ethernet0/3
- description Link to B1-CD-2 e0/2 for Routing
+ description Link to B1-DS1 e0/2 for Routing
  no switchport
- ip address 10.20.78.2 255.255.255.252
+ ip address 10.20.56.2 255.255.255.252
  ip ospf authentication key-chain az
- ip ospf 1 area 1
  ip ospf network point-to-point
- ip ospf 1 area 1
- duplex full
+ ip ospf 1 area 2
+  duplex full
 
 !--------------- ospf -------------------
 router ospf 1
- router-id 172.16.20.8
- network 10.10.0.0 0.0.255.255 area 1
+ router-id 172.16.20.6
+ network 10.20.0.0 0.0.255.255 area 2
  exit 
 
 
@@ -379,9 +280,9 @@ interface Ethernet0/2
  description Link to B1-DSW1 e0/2 for all vlan
  switchport trunk encapsulation dot1q
  switchport mode trunk
- switchport trunk allowed vlan 10,20,30,40,50,60
+ switchport trunk allowed vlan 1,10,20,30,40,50,60
  switchport nonegotiate
- spanning-tree portfast edge trunk
+ spanning-tree link-type point-to-point
  spanning-tree cost 1000
  no sh
 
@@ -400,8 +301,6 @@ interface Vlan20
 interface Vlan30
  ip address 192.168.23.102 255.255.255.0
  vrrp 30 ip 192.168.23.100
- vrrp 30 priority 150
- vrrp 30 preempt
  vrrp 30 authentication text HaHs$VL
  no sh
 !
@@ -416,6 +315,8 @@ interface Vlan40
 interface Vlan50
  ip address 192.168.25.102 255.255.255.0
  vrrp 50 ip 192.168.25.100
+ vrrp 50 priority 150
+ vrrp 50 preempt
  vrrp 50 authentication text HaHs$VL
  no sh
 !
@@ -431,8 +332,20 @@ interface Vlan60
 
 
 router ospf 1
+ network 192.168.21.0 0.0.0.255 area 2
+ network 192.168.22.0 0.0.0.255 area 2
+ network 192.168.23.0 0.0.0.255 area 2
+ network 192.168.24.0 0.0.0.255 area 2
+ network 192.168.25.0 0.0.0.255 area 2
+ network 192.168.26.0 0.0.0.255 area 2
+
+ passive-interface g1/0
+ passive-interface g1/1
+ passive-interface g1/2
+ passive-interface g1/3
+ passive-interface g2/0
+ passive-interface g2/1
  passive-interface Vlan10
- passive-interface Vlan11
  passive-interface Vlan20
  passive-interface Vlan30
  passive-interface Vlan40
@@ -451,6 +364,7 @@ interface range e1/0-1
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
+ spanning-tree link-type point-to-point
  channel-group 2 mode desirable
  switchport trunk allowed vlan 10,20
 no sh
@@ -466,6 +380,7 @@ interface range e1/2-3
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
+ spanning-tree link-type point-to-point
  channel-group 1 mode desirable
  switchport trunk allowed vlan  30,40
 no sh
@@ -482,6 +397,7 @@ interface range e2/0-1
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
+ spanning-tree link-type point-to-point
  channel-group 3 mode desirable
  switchport trunk allowed vlan  50,60
 no sh
@@ -492,8 +408,14 @@ no sh
 
 ===============================================
 hostname B1-ASW1
-spanning-tree mode mst
 ip domain-name hahs.org
+spanning-tree mode mst
+
+spanning-tree mst configuration
+ name B1-hahs
+ revision 1
+ instance 1 vlan 10,20,30
+ instance 2 vlan 40 ,50,60
 
 
 !--------------- VLAN -------------------
@@ -520,6 +442,7 @@ switchport mode trunk
 switchport nonegotiate
 switchport trunk allowed vlan 10,20
 interface range e1/0-1
+ description Link to B1-DSW1 ch1 vlan for 10,20
 switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport nonegotiate
@@ -535,6 +458,7 @@ switchport mode trunk
 switchport nonegotiate
 switchport trunk allowed vlan 10,20
 interface range e1/2-3
+ description Link to B1-DSW2 ch2 vlan for 10,20
 switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport nonegotiate
@@ -556,8 +480,14 @@ interface rang Ethernet2/0-3
 
 ===============================================
 hostname B1-ASW2
-spanning-tree mode mst
 ip domain-name hahs.org
+spanning-tree mode mst
+
+spanning-tree mst configuration
+ name B1-hahs
+ revision 1
+ instance 1 vlan 10,20,30
+ instance 2 vlan 40 ,50,60
 
 
 !--------------- VLAN -------------------
@@ -583,6 +513,7 @@ interface range e1/2-3 ,port-channel 1
  switchport nonegotiate
  switchport trunk allowed vlan 30,40
 interface range e1/2-3
+ description Link to B1-DSW1 ch1 vlan for 30,40
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport nonegotiate
@@ -598,6 +529,7 @@ switchport mode trunk
 switchport nonegotiate
 switchport trunk allowed vlan 30,40
 interface range e1/0-1
+ description Link to B1-DSW2 ch1 vlan for 30,40
 switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport nonegotiate
@@ -619,9 +551,14 @@ interface rang Ethernet2/0-3
 ===================================================================
 ===============================================
 hostname B1-ASW3
-spanning-tree mode mst
 ip domain-name hahs.org
+spanning-tree mode mst
 
+spanning-tree mst configuration
+ name B1-hahs
+ revision 1
+ instance 1 vlan 10,20,30
+ instance 2 vlan 40 ,50,60
 
 !--------------- VLAN -------------------
 vlan 10
@@ -646,6 +583,7 @@ switchport mode trunk
 switchport nonegotiate
 switchport trunk allowed vlan 50,60
 interface range e1/0-1
+ description Link to B1-DSW1 ch1 vlan for 50,60
 switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport nonegotiate
@@ -661,6 +599,7 @@ switchport mode trunk
 switchport nonegotiate
 switchport trunk allowed vlan 50,60
 interface range e1/2-3
+ description Link to B1-DSW2 ch2 vlan for 50,60
 switchport trunk encapsulation dot1q
 switchport mode trunk
 switchport nonegotiate
@@ -680,9 +619,4 @@ no sh
 
 ===================================================================
 
-
-
-ip 192.168.21.10/24 192.168.21.100
-ip 192.168.23.10/24 192.168.23.100
-ip 192.168.25.10/24 192.168.25.100
 

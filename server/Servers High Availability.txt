@@ -1,0 +1,285 @@
+DFS
+Branch Cache
+Cluster 
+Disaster Recovery
+Replication
+DNS -round-robin
+===========================================================
+PDC-SRV		AD + DNS + 
+ADC-SRV		AD DNS + CA
+
+NET-SRV		DHCP + RADIUS + WDS 
+STG-SRV		FSRM+DFS + Backup
+
+Cluster  server 	
+
+APP-SRV		Web
+APP2-SRV	Mail
+
+BR1-DC		Read-Only DC + DNS + DHCP Backup + File Cache
+BR2-DC		Read-Only DC + DNS + DHCP Backup + File Cache
+-------------------------------------------------------
+ADDS
+DNS & GC
+
+ADCS
+إذا توقف ADC (Issuing CA) → يتم إصدار الشهادات من PDC
+
+- Standby CA in  PDC (Manual Failover)
+ADC-SRV = Primary Issuing CA
+PDC-SRV = Standby Issuing CA
+
+خذ Backup كامل من CA على ADC:
+certutil -backupdb D:\CA-Backup
+certutil -backupkey D:\CA-Backup
+
+DHCP
+Radius
+WDS
+
+File & DFS
+Backup
+
+Web
+Mail
+
+FSMO Roles + GC + DNS
+
+✔ لا تترك كل FSMO على PDC فقط → وزّع:
+
+PDC Emulator + RID → PDC-SRV
+Schema + Domain Naming + Infrastructure → ADC-SRV
+---------------------------------------------------
+| Layer | Primary		| Secondary 
+| -----	| --------------------- |------------------ |
+| PDC	| AD + DNS 		| CA		    |
+| ADC	| AD + DNS + CA		| DHCP + RADIUS  |
+
+| Net   | DHCP + RADIUS WDS 	| 
+| Str	| File DFS +Backup	| WDS
+| Clr	| Cluster       	| File DFS +Backup
+
+| App1	| Web       		| Mail		   |
+| App2	| Mail       		| Web 		   |
+
+
+|-----------------------------------|
+| Layer	   | Primary	| Secondary |
+| ---------| -----------|-----------|
+| AD + DNS |  PDC	| ADS	    |
+| AD CA	   |  ADC	| PDS	    |
+
+| DHCP	   |  NET	| ADS	    |
+| RADIUS   |  NET	| ADS	    |
+
+| WDS      |  NET	| Str	    |
+
+| file     |  Str	| Clr	    |
+| backup   |  Str	| Clr	    |
+
+| Web      |  App1	| App2	    |
+| Mail     |  App2	| App1	    |
+-------------------------------------
+folder sharing 
+-HR_data
+
+===========================================================
+-external data storge
+	-iSCSI	, FC	,SAN 
+
+-3 network Adapter	--optional
+	1-domain
+	2.iSCSI
+	3.Cluster
+
+---------------------
+NAS 
+-----
+add 3*50G hard
+	create RAID5 
+install iSCSI target
+===========================================================
+Suricata
+===========================================================
+============================================================
+Fail over cluster
+--------------------
+-external data storge
+	-iSCSI	, FC	,SAN 
+
+-3 network Adapter	--optional
+	1-domain
+	2.iSCSI
+	3.Cluster
+
+-------
+DFS Namespace Server
+DHCP Server
+C.Disebuted Transaction Coordinator (DTC)
+File Server
+Generic Applicaton
+Generic Script
+Generic Service
+Hyper-V Replica Brok
+iSCSI Taroet Server
+
+==========================================================
+ADCS
+إذا توقف ADC (Issuing CA) → يتم إصدار الشهادات من PDC
+
+- Standby CA in  PDC (Manual Failover)
+ADC-SRV = Primary Issuing CA
+PDC-SRV = Standby Issuing CA
+
+خذ Backup كامل من CA على ADC:
+certutil -backupdb D:\CA-Backup
+certutil -backupkey D:\CA-Backup
+
+جهّز PDC:
+ثبت AD CS (بدون Configuration)
+3. عند حدوث فشل ADC:
+✔ استرجاع CA على PDC:
+certutil -restoredb D:\CA-Backup
+certutil -restorekey D:\CA-Backup
+
+ثم:
+
+Configure CA بنفس:
+CA Name
+Keys
+==========================================================
+🧠 Active Directory + DNS
+المطلوب:
+DC redundancy
+DNS redundancy
+التنفيذ:
+كلا السيرفرين:
+GC Enabled
+DNS Active-Active
+تفعيل:
+AD Integrated DNS Zones
+Replication (Multi-Master)
+==========================================================
+🌐 DHCP (Critical Service)
+الحل الاحترافي:
+DHCP Failover (Load Balance Mode)
+NET-SRV  → Primary (50%)
+ADC-SRV → Secondary (50%)
+
+✔ Modes:
+
+Load Balance (Best)
+Hot Standby (اختياري للفروع)
+==========================================================
+📦 File Services 
+
+1) DFS Namespace
+Domain-based namespace
+\\domain.local\Files
+
+2) DFS Replication
+بين:
+STG-SRV
+Cluster Nodes
+
+3) File Server Cluster
+استخدم:
+Failover Clustering
+
+✔ النتيجة:
+High Availability + Load Distribution
+==========================================================
+💾 Backup
+الاستراتيجية:
+Backup على STG-SRV
+نسخة ثانية:
+Offsite (Branch أو Cloud)
+
+✔ استخدم:
+
+Veeam / Windows Backup
+
+
+==========================================================
+3) Branch Strategy (الفروع)
+🔹 RODC
+
+✔ ممتاز للأمان
+🔹 DNS
+يعمل Cache + Secondary
+🔹 DHCP
+Failover مع HQ
+🔹 File Cache
+DFS-R + BranchCache
+
+
+Branch:
+RODC
+DNS Cache
+DHCP Backup
+DFS Cache
+==========================================================
+4) Load Balancing Design
+🔹 DNS Round Robin
+للخدمات البسيطة:
+
+web.domain.local → APP-SRV + APP2-SRV
+🔹 Layer 4/7 Load Balancer
+
+للخدمات الحرجة:
+HAProxy
+NGINX
+Fortigate / Palo Alto
+
+
+==========================================================
+🔹 Web (APP-SRV)
+HTTPS من CA
+
+
+
+أخطر الهجمات التي يجب منعها
+🔥 ESC (Enterprise CA attacks)
+
+مثل:
+
+ESC1: Template Misconfiguration
+ESC8: NTLM Relay to AD CS
+==========================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+17-Shadow Copy/Data Backup/Disaster Recovery	[59-62]		
+21-Network Load Balance (NLB) [71]
+22-Failover Cluster		[72-73]
+24-FSRM [76-79]
+25-(DAC) & Branch Cache	& Work Folders & Print Servers [80-83]
+26-DFS (Name Space & Replication) 	[84-85]
+===========
+59-Shadow Copy and Data Backup   		00:26:31
+60-Disaster Recovery - System State Backup	00:28:28
+61-Disaster Recovery - Recover A User		00:10:58     
+62-Disaster Recovery - Bare Metal Backup	00:21:17
+
+72-Failover Cluster     	00:50:28
+
+76-FSRM Part 1- Quota       			00:26:07 
+77-FSRM Part 2 - File Screening			00:28:48 
+78-FSRM Part 3 - Classification			00:14:44  
+79-FSRM Part 4 - Access Denied Assistance	00:12:09 
+
+81-Branch Cache			00:19:03 
+82-Work Folders			00:23:09 
+
+84-DFS Name Space	00:23:11 
+85-DFS Replication	00:20:32 

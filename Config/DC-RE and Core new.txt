@@ -82,7 +82,6 @@ router ospf 1
  router-id 172.16.10.1
  network 10.10.0.0 0.0.255.255 area 1
  exit
-ip route 0.0.0.0 0.0.0.0 82.1.1.2
 
 ! ---------- NAT  ----------
 access-list 10 permit  10.10.0.0  0.0.255.255
@@ -221,7 +220,6 @@ router ospf 1
  router-id 172.16.10.2
  network 10.10.0.0 0.0.255.255 area 1
  exit
-ip route 0.0.0.0 0.0.0.0 82.1.2.4
 
 
 ! ---------- NAT  ----------
@@ -347,11 +345,7 @@ interface Ethernet0/2
 
 router ospf 1
  router-id 172.16.10.3
- network 10.0.0.0 0.255.255.255 area 1
-ip route 0.0.0.0 0.0.0.0 Ethernet0/0
-
-
-
+ network 10.10.0.0 0.0.255.255 area 1
 
 =============================================================
 conf t
@@ -434,8 +428,7 @@ interface Ethernet0/2
 ! ---------- OSPF ----------
 router ospf 1
  router-id 172.16.10.4
- network 10.0.0.0 0.255.255.255 area 1
-ip route 0.0.0.0 0.0.0.0 Ethernet0/1
+ network 10.10.0.0 0.0.255.255 area 1
 
 =======================================================
 ip domain name hahs.org

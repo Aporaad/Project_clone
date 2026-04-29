@@ -54,40 +54,37 @@ interface Ethernet1/1
  duplex full
  no shutdown
 
-
+!---
 ip prefix-list INTERNAL-NETS seq 5 permit 10.30.0.0/16 le 32
 ip prefix-list INTERNAL-NETS seq 10 permit 172.16.30.0/24 le 32
 ip prefix-list INTERNAL-NETS seq 15 permit 192.168.00.0/16 le 32
 
-!
 route-map EIGRP-TO-OSPF deny 10
  match tag 200
 !
 route-map EIGRP-TO-OSPF permit 20
  match ip address prefix-list INTERNAL-NETS
- set tag 100
  set metric-type type-1
+ set tag 100
 !
 route-map OSPF-TO-EIGRP deny 10
  match tag 100
 !
 route-map OSPF-TO-EIGRP permit 20
  match ip address prefix-list INTERNAL-NETS
- set tag 200
  set metric 10000 100 255 1 1500
-
+ set tag 200
 
 router eigrp 100
- eigrp router-id 172.16.30.5
  network 10.30.0.0 0.0.255.255
  network 172.16.30.0 0.0.0.255
  redistribute ospf 1 route-map OSPF-TO-EIGRP
-
+ eigrp router-id 172.16.30.5
+!
 router ospf 1
  router-id 172.16.30.5
  redistribute eigrp 100 subnets route-map EIGRP-TO-OSPF
 
-ip route 0.0.0.0 0.0.0.0 10.30.35.1
 ==============================================
 hostname B2-CSW2
 
@@ -145,37 +142,37 @@ interface Ethernet1/1
  duplex full
  no shutdown
 
+!------
 ip prefix-list INTERNAL-NETS seq 5 permit 10.30.0.0/16 le 32
 ip prefix-list INTERNAL-NETS seq 10 permit 172.16.30.0/24 le 32
-!
+ip prefix-list INTERNAL-NETS seq 15 permit 192.168.0.0/16 le 32
+!-------
 route-map EIGRP-TO-OSPF deny 10
  match tag 200
 !
 route-map EIGRP-TO-OSPF permit 20
  match ip address prefix-list INTERNAL-NETS
- set tag 100
  set metric-type type-1
+ set tag 100
 !
 route-map OSPF-TO-EIGRP deny 10
  match tag 100
 !
 route-map OSPF-TO-EIGRP permit 20
  match ip address prefix-list INTERNAL-NETS
- set tag 200
  set metric 10000 100 255 1 1500
-
+ set tag 200
 
 router eigrp 100
- eigrp router-id 172.16.30.6
  network 10.30.0.0 0.0.255.255
  network 172.16.30.0 0.0.0.255
  redistribute ospf 1 route-map OSPF-TO-EIGRP
-
+ eigrp router-id 172.16.30.6
+!
 router ospf 1
  router-id 172.16.30.6
  redistribute eigrp 100 subnets route-map EIGRP-TO-OSPF
 
-ip route 0.0.0.0 0.0.0.0 10.30.36.1
 =================================================
 
 
@@ -267,7 +264,6 @@ router eigrp 100
  network 10.30.0.0 0.0.255.255
  network 172.16.30.0 0.0.0.255
 
-ip route 0.0.0.0 0.0.0.0 10.30.57.1
 
 !--------------- VLAN -------------------
 vlan 10
@@ -460,7 +456,6 @@ router eigrp 100
  network 10.30.0.0 0.0.255.255
  network 172.16.30.0 0.0.0.255
 
-ip route 0.0.0.0 0.0.0.0 10.30.58.1
 
 !--------------- vlan -------------------
 vlan 10

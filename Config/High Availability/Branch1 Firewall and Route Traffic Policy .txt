@@ -165,7 +165,7 @@ interface Ethernet0/0
  glbp 1 ip 10.20.11.3
  glbp 1 priority 110
 !----------------------
-iip access-list extended ACL_LAN-To-BRANCH-1
+ip access-list extended ACL_LAN-To-BRANCH-1
  permit ip any 10.10.0.0 0.0.255.255
  permit ip any 172.16.10.0 0.0.0.255
  permit ip any 192.168.8.0 0.0.7.255 !8-15
@@ -264,7 +264,7 @@ int tunnel 1
  ip ospf dead-interval 10 
 !-------------------------
 ip prefix-list DC-IN-FILTER seq 5 permit 10.0.0.0/8 le 32
-ip prefix-list DC-IN-FILTER seq 10 permit 172.0.0.0/16 le 32
+ip prefix-list DC-IN-FILTER seq 10 permit 172.16.0.0/16 le 32
 ip prefix-list DC-IN-FILTER seq 15 permit 192.168.0.0/16 le 32
 ip prefix-list DC-IN-FILTER seq 21 permit 82.2.2.0/30 le 32
 ip prefix-list DC-IN-FILTER seq 22 permit 82.2.6.0/30 le 32
